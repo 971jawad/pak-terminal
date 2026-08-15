@@ -1,0 +1,1767 @@
+{
+  "sectors": [
+    {
+      "code": "0807",
+      "name": "Commercial Banks",
+      "key_tickers": [
+        "HBL",
+        "MCB",
+        "UBL",
+        "MEBL",
+        "BAHL"
+      ],
+      "inputs": [
+        "Deposits (funding base)",
+        "Wholesale/interbank funding",
+        "Human capital",
+        "Core-banking IT systems"
+      ],
+      "outputs": [
+        "Advances (corporate, consumer, SME)",
+        "Trade finance/LCs",
+        "Treasury/investment income (heavy PIB & T-bill books)",
+        "Fee & FX income"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": 0.6,
+        "pkr_depreciation": 0.15,
+        "oil": 0.05,
+        "remittances": 0.2,
+        "rationale": "Pakistani banks are structurally asset-sensitive with very large government-securities books (often >50% of assets in PIBs/T-bills), so a rate hike expands NIMs and re-prices the investment portfolio upward (+0.6), though prolonged high rates lift NPLs. PKR depreciation is mildly positive via FX/trade-finance fee income and revaluation gains but raises credit risk in dollarised exposures (+0.15). Oil is near-neutral (transmits only via inflation->rates). Rising remittances swell low-cost deposits and home-remittance fee income (+0.2)."
+      },
+      "global_exposure": [
+        {
+          "shock": "US rate hikes",
+          "sign": -0.2,
+          "channel": "Frontier equity outflows and weaker PKR/reserves pressure valuations despite domestic NIM tailwind"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Weaker trade volumes reduce trade-finance flows and macro growth"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.1,
+          "channel": "Import bill widens, reserves/PKR stress, sovereign-linked asset-quality risk"
+        }
+      ],
+      "upstream": [
+        "Technology & Communication",
+        "Insurance"
+      ],
+      "downstream": [
+        "Automobile Assembler",
+        "Cement",
+        "Textile Composite",
+        "Power Generation & Distribution",
+        "Real Estate Investment Trust"
+      ]
+    },
+    {
+      "code": "0804",
+      "name": "Cement",
+      "key_tickers": [
+        "LUCK",
+        "DGKC",
+        "FCCL",
+        "MLCF",
+        "PIOC"
+      ],
+      "inputs": [
+        "Coal (imported South African/Afghan + local Thar)",
+        "Electricity (grid + captive WHR/coal)",
+        "Limestone (local, self-quarried)",
+        "Gypsum",
+        "Furnace oil/gas"
+      ],
+      "outputs": [
+        "Grey cement (bagged, domestic)",
+        "Clinker & cement exports",
+        "White cement"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.6,
+        "pkr_depreciation": -0.3,
+        "oil": -0.4,
+        "remittances": 0.3,
+        "rationale": "Rate hikes crush the interest-rate-sensitive construction/real-estate demand base and hit levered balance sheets carrying large expansion debt (-0.6). PKR depreciation raises imported-coal cost per tonne, only partly offset by dollar clinker exports (-0.3). Oil rise lifts fuel, power and freight costs and correlates with coal (-0.4). Rising remittances fund housing/real-estate construction, a core demand channel (+0.3)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Imported coal price",
+          "sign": -0.6,
+          "channel": "Coal is the single largest variable cost (~50-60% of production cost) for non-Thar plants"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0.1,
+          "channel": "Softer global coal/energy demand lowers input costs"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.3,
+          "channel": "Energy and freight cost inflation plus demand drag from macro tightening"
+        }
+      ],
+      "upstream": [
+        "Engineering",
+        "Power Generation & Distribution",
+        "Oil & Gas Marketing"
+      ],
+      "downstream": [
+        "Real Estate Investment Trust",
+        "Automobile Assembler",
+        "Cable & Electrical Goods"
+      ]
+    },
+    {
+      "code": "0809",
+      "name": "Fertilizer",
+      "key_tickers": [
+        "FFC",
+        "EFERT",
+        "FATIMA"
+      ],
+      "inputs": [
+        "Natural gas (feedstock + fuel for urea)",
+        "Imported phosphate rock/phosphoric acid (for DAP)",
+        "Electricity",
+        "Imported potash"
+      ],
+      "outputs": [
+        "Urea",
+        "DAP",
+        "CAN/NP",
+        "Ammonia"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": -0.15,
+        "oil": 0.05,
+        "remittances": 0.1,
+        "rationale": "Defensive, cash-generative, high-dividend sector with largely inelastic domestic demand; mild negative to rate hikes via holding-cost and some leverage (-0.2). PKR depreciation raises imported DAP/phosphoric-acid cost while domestic-gas urea is partly insulated and often benefits from import-parity retention pricing (-0.15 net). Oil is near-neutral: international urea/gas prices rise together, roughly offsetting (+0.05). Remittances lift rural incomes and offtake modestly (+0.1). The dominant driver is administered gas/feedstock pricing, captured below."
+      },
+      "global_exposure": [
+        {
+          "shock": "Domestic gas/feedstock tariff hike",
+          "sign": -0.5,
+          "channel": "Gas is the urea feedstock; tariff hikes compress margins unless fully passed through"
+        },
+        {
+          "shock": "International urea/DAP price",
+          "sign": 0.4,
+          "channel": "Retention/import-parity pricing lets local players capture global price upcycles"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.05,
+          "channel": "Higher global gas and input freight, partly offset by higher product prices"
+        }
+      ],
+      "upstream": [
+        "Oil & Gas Exploration",
+        "Chemical"
+      ],
+      "downstream": [
+        "Sugar & Allied",
+        "Food & Personal Care Products",
+        "Textile Spinning"
+      ]
+    },
+    {
+      "code": "0820",
+      "name": "Oil & Gas Exploration",
+      "key_tickers": [
+        "OGDC",
+        "PPL",
+        "POL",
+        "MARI"
+      ],
+      "inputs": [
+        "Exploration & development capex",
+        "Imported drilling rigs/equipment",
+        "Seismic services"
+      ],
+      "outputs": [
+        "Crude oil",
+        "Natural gas",
+        "LPG",
+        "Condensate"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.1,
+        "pkr_depreciation": 0.6,
+        "oil": 0.8,
+        "remittances": 0,
+        "rationale": "Cash-rich, low-leverage E&Ps; rate hikes barely matter operationally (-0.1). Wellhead prices are USD-denominated, so PKR depreciation directly inflates PKR revenue and earnings (+0.6). Oil is the primary revenue driver via crude-linked gas and oil pricing (+0.8). Remittances have no direct channel."
+      },
+      "global_exposure": [
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": 0.7,
+          "channel": "Higher realized crude and oil-linked gas prices lift revenue directly"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.3,
+          "channel": "Weaker global oil demand and prices"
+        },
+        {
+          "shock": "US rate hikes",
+          "sign": -0.2,
+          "channel": "Stronger USD/commodity headwind and frontier equity outflows"
+        }
+      ],
+      "upstream": [],
+      "downstream": [
+        "Refinery",
+        "Oil & Gas Marketing",
+        "Fertilizer",
+        "Power Generation & Distribution"
+      ]
+    },
+    {
+      "code": "0821",
+      "name": "Oil & Gas Marketing",
+      "key_tickers": [
+        "PSO",
+        "APL",
+        "SNGP",
+        "SSGC"
+      ],
+      "inputs": [
+        "Refined products (local refineries + imported HSD/petrol)",
+        "Imported LNG",
+        "Storage, pipeline & retail logistics"
+      ],
+      "outputs": [
+        "HSD & motor gasoline",
+        "Furnace oil",
+        "Jet fuel",
+        "Piped gas/RLNG distribution"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.3,
+        "pkr_depreciation": 0.05,
+        "oil": 0.2,
+        "remittances": 0.1,
+        "rationale": "OMCs carry heavy working capital and circular-debt receivables, so rate hikes inflate financing cost (-0.3). PKR depreciation gives inventory revaluation gains but raises USD import cost on fixed regulated margins (+0.05 net). Rising oil prices generate inventory gains and higher per-litre absolute margins, partly offset by demand elasticity (+0.2). Remittances lift discretionary mobility/fuel demand (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": 0.2,
+          "channel": "Inventory revaluation gains offset partly by volume destruction and circular-debt strain"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0,
+          "channel": "Limited direct exposure; second-order via oil price"
+        },
+        {
+          "shock": "US rate hikes",
+          "sign": -0.1,
+          "channel": "PKR/reserves pressure raises import-financing costs"
+        }
+      ],
+      "upstream": [
+        "Refinery",
+        "Oil & Gas Exploration"
+      ],
+      "downstream": [
+        "Power Generation & Distribution",
+        "Transport",
+        "Cement",
+        "Automobile Assembler"
+      ]
+    },
+    {
+      "code": "0824",
+      "name": "Power Generation & Distribution",
+      "key_tickers": [
+        "HUBC",
+        "KAPCO",
+        "KEL",
+        "NPL",
+        "NCPL"
+      ],
+      "inputs": [
+        "Furnace oil",
+        "Natural gas/RLNG",
+        "Imported coal (CPEC plants)",
+        "Hydrology (run-of-river/reservoir)",
+        "Project debt"
+      ],
+      "outputs": [
+        "Electricity (capacity payments + energy payments under PPAs)"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": 0.3,
+        "oil": -0.2,
+        "remittances": 0.1,
+        "rationale": "IPPs carry large project debt and stranded circular-debt receivables, so rate hikes raise financing/discount cost (-0.2). Returns and capacity payments are USD-indexed, so PKR depreciation lifts PKR-denominated returns (+0.3). Oil rise raises furnace-oil fuel cost and worsens circular debt even with pass-through (-0.2). Remittances have only a weak demand-side link (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Imported coal price",
+          "sign": -0.2,
+          "channel": "Coal IPP fuel cost; passed through but strains payment chain and utilisation"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.2,
+          "channel": "Furnace-oil generation cost and macro/circular-debt stress"
+        },
+        {
+          "shock": "US rate hikes",
+          "sign": -0.1,
+          "channel": "Higher USD-indexed return benchmark offset by frontier outflows and reserves pressure"
+        }
+      ],
+      "upstream": [
+        "Oil & Gas Marketing",
+        "Oil & Gas Exploration",
+        "Refinery"
+      ],
+      "downstream": [
+        "Engineering",
+        "Cement",
+        "Textile Composite",
+        "Chemical"
+      ]
+    },
+    {
+      "code": "0801",
+      "name": "Automobile Assembler",
+      "key_tickers": [
+        "INDU",
+        "HCAR",
+        "MTL",
+        "PSMC"
+      ],
+      "inputs": [
+        "Imported CKD kits (engines, transmissions)",
+        "Local & imported steel/HRC",
+        "Plastics & rubber",
+        "Imported electronics",
+        "Bank auto-financing (demand enabler)"
+      ],
+      "outputs": [
+        "Passenger cars",
+        "Tractors",
+        "Motorcycles",
+        "Light commercial vehicles"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.6,
+        "pkr_depreciation": -0.7,
+        "oil": -0.2,
+        "remittances": 0.3,
+        "rationale": "A large share of car demand is auto-financed, so rate hikes directly kill volumes plus raise inventory financing cost (-0.6). CKD kits are imported, so PKR depreciation raises input cost and squeezes margins or forces price hikes that destroy demand (-0.7). Oil rise dampens running-cost affordability and sentiment (-0.2). Remittances boost discretionary big-ticket purchasing power (+0.3)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global steel price",
+          "sign": -0.3,
+          "channel": "Steel-intensive BOM raises cost when prices rise"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0.1,
+          "channel": "Cheaper Chinese steel/components and new-entrant competition, net mild input relief"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.2,
+          "channel": "Fuel-cost sentiment plus PKR/import-cost pressure on CKD"
+        }
+      ],
+      "upstream": [
+        "Automobile Parts & Accessories",
+        "Engineering",
+        "Commercial Banks",
+        "Cable & Electrical Goods"
+      ],
+      "downstream": []
+    },
+    {
+      "code": "0802",
+      "name": "Automobile Parts & Accessories",
+      "key_tickers": [
+        "THALL",
+        "LOADS",
+        "EXIDE",
+        "GTYR"
+      ],
+      "inputs": [
+        "Steel/HRC",
+        "Lead (batteries)",
+        "Natural & synthetic rubber (tyres)",
+        "Imported components & alloys",
+        "Energy"
+      ],
+      "outputs": [
+        "OEM parts (leaf springs, seats, batteries)",
+        "Automotive batteries",
+        "Tyres & tubes",
+        "Aftermarket components"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.5,
+        "pkr_depreciation": -0.4,
+        "oil": -0.2,
+        "remittances": 0.2,
+        "rationale": "Demand is derived from OEM auto volumes, which are rate-sensitive, plus own working-capital financing (-0.5). Imported steel, lead and rubber make the sector PKR-depreciation negative (-0.4). Oil lifts rubber/energy input and freight (-0.2). Remittances support the vehicle-parc and aftermarket demand (+0.2)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global steel price",
+          "sign": -0.3,
+          "channel": "Raw-material cost for springs/structural parts"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0,
+          "channel": "Cheaper Chinese inputs vs import competition, broadly offsetting"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.2,
+          "channel": "Rubber/plastics feedstock and energy cost inflation"
+        }
+      ],
+      "upstream": [
+        "Engineering",
+        "Chemical"
+      ],
+      "downstream": [
+        "Automobile Assembler"
+      ]
+    },
+    {
+      "code": "0808",
+      "name": "Engineering",
+      "key_tickers": [
+        "ISL",
+        "ASTL",
+        "MUGHAL",
+        "INIL",
+        "ASL"
+      ],
+      "inputs": [
+        "Imported scrap & billets",
+        "Imported HRC (for flat/galvanised)",
+        "Iron ore",
+        "Electricity & gas (electric-arc/induction furnaces)"
+      ],
+      "outputs": [
+        "Rebar/long steel (construction)",
+        "Flat steel & CRC/HRC",
+        "Galvanised & coated products",
+        "Girders"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.6,
+        "pkr_depreciation": -0.4,
+        "oil": -0.3,
+        "remittances": 0.2,
+        "rationale": "Long-steel demand is driven by construction, which collapses under rate hikes, and the sector is highly levered/energy-intensive (-0.6). Scrap, billets and HRC are imported, so PKR depreciation raises input cost (-0.4). Oil rise lifts the heavy power/gas bill (-0.3). Remittances fuel construction offtake (+0.2)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global steel/scrap price",
+          "sign": -0.4,
+          "channel": "Imported scrap/HRC is the dominant cost; margins swing on the international spread"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.2,
+          "channel": "Chinese steel dumping into the region undercuts local flat-steel pricing"
+        },
+        {
+          "shock": "Imported coal price",
+          "sign": -0.2,
+          "channel": "Energy/reduction cost pressure for integrated producers"
+        }
+      ],
+      "upstream": [
+        "Power Generation & Distribution",
+        "Oil & Gas Marketing"
+      ],
+      "downstream": [
+        "Automobile Assembler",
+        "Automobile Parts & Accessories",
+        "Cement",
+        "Cable & Electrical Goods",
+        "Real Estate Investment Trust"
+      ]
+    },
+    {
+      "code": "0805",
+      "name": "Chemical",
+      "key_tickers": [
+        "EPCL",
+        "LOTCHEM",
+        "ICI",
+        "ENGRO",
+        "COLG"
+      ],
+      "inputs": [
+        "Ethylene, EDC, VCM (imported feedstock)",
+        "Naphtha/PX-PTA chain",
+        "Natural gas",
+        "Imported specialty chemicals"
+      ],
+      "outputs": [
+        "PVC & caustic soda",
+        "PTA (polyester intermediate)",
+        "Soda ash",
+        "Polymers & coatings"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.3,
+        "pkr_depreciation": -0.2,
+        "oil": 0.1,
+        "remittances": 0.1,
+        "rationale": "Cyclical, moderately levered; rate hikes hit downstream construction/textile demand and financing (-0.3). Imported ethylene/EDC/PTA feedstock makes PKR depreciation a net cost negative despite import-parity output pricing (-0.2). Oil is mildly positive for producers when product prices (PVC, PTA) rise faster than lagging feedstock, widening the core margin/delta (+0.1). Remittances give a small consumption pull (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "China slowdown",
+          "sign": -0.3,
+          "channel": "PVC/PTA/soda-ash are globally priced; Chinese oversupply and weak demand compress the delta"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": 0.1,
+          "channel": "Higher product prices via naphtha/ethylene chain, feedstock lag permitting"
+        },
+        {
+          "shock": "US rate hikes",
+          "sign": -0.1,
+          "channel": "Global growth/valuation drag"
+        }
+      ],
+      "upstream": [
+        "Oil & Gas Exploration",
+        "Refinery"
+      ],
+      "downstream": [
+        "Synthetic & Rayon",
+        "Textile Composite",
+        "Paper, Board & Packaging",
+        "Automobile Parts & Accessories",
+        "Pharmaceuticals"
+      ]
+    },
+    {
+      "code": "0823",
+      "name": "Pharmaceuticals",
+      "key_tickers": [
+        "GLAXO",
+        "AGP",
+        "SEARL",
+        "HINOON",
+        "ABOT"
+      ],
+      "inputs": [
+        "Imported active pharmaceutical ingredients (APIs, mostly China/India)",
+        "Excipients",
+        "Imported packaging materials",
+        "Energy"
+      ],
+      "outputs": [
+        "Branded generics (Rx)",
+        "OTC medicines",
+        "Vaccines/biologicals (select)"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": -0.5,
+        "oil": -0.1,
+        "remittances": 0.1,
+        "rationale": "Defensive volumes with some working-capital sensitivity (-0.2). The key vulnerability is imported APIs against DRAP-regulated price ceilings, so PKR depreciation sharply squeezes margins until periodic price relief (-0.5). Oil is a minor cost/logistics factor (-0.1). Remittances give a small affordability lift on defensive demand (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "China API supply/price",
+          "sign": -0.3,
+          "channel": "China dominates API supply; price spikes or disruption raise input cost"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.1,
+          "channel": "Freight and PKR pressure on imported inputs"
+        },
+        {
+          "shock": "US rate hikes",
+          "sign": -0.1,
+          "channel": "PKR/reserves pressure on import financing"
+        }
+      ],
+      "upstream": [
+        "Chemical"
+      ],
+      "downstream": []
+    },
+    {
+      "code": "0825",
+      "name": "Refinery",
+      "key_tickers": [
+        "ATRL",
+        "NRL",
+        "PRL",
+        "CNERGY"
+      ],
+      "inputs": [
+        "Imported crude oil",
+        "Local crude & condensate",
+        "Energy for processing"
+      ],
+      "outputs": [
+        "HSD & motor gasoline",
+        "Furnace oil",
+        "Naphtha",
+        "Jet fuel/kerosene"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": 0.2,
+        "oil": 0.3,
+        "remittances": 0,
+        "rationale": "Working-capital-heavy but margins driven by crack spreads; mild rate-hike drag (-0.2). PKR depreciation gives USD-linked product-price and inventory revaluation gains against crude cost (+0.2). Rising oil generates inventory/GRM gains when prices are trending up (+0.3). No direct remittance channel."
+      },
+      "global_exposure": [
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": 0.3,
+          "channel": "Higher GRMs and inventory gains, partly offset by crude-supply/availability risk"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Softer regional refining margins"
+        },
+        {
+          "shock": "US rate hikes",
+          "sign": -0.1,
+          "channel": "PKR/import-financing pressure"
+        }
+      ],
+      "upstream": [
+        "Oil & Gas Exploration"
+      ],
+      "downstream": [
+        "Oil & Gas Marketing",
+        "Power Generation & Distribution",
+        "Chemical"
+      ]
+    },
+    {
+      "code": "0828",
+      "name": "Technology & Communication",
+      "key_tickers": [
+        "SYS",
+        "TRG",
+        "NETSOL",
+        "AVN"
+      ],
+      "inputs": [
+        "Skilled engineering labour",
+        "Imported hardware/cloud & bandwidth",
+        "Office infrastructure"
+      ],
+      "outputs": [
+        "Software & IT services exports",
+        "BPO/ITeS",
+        "Telecom & digital services",
+        "Product licences"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": 0.7,
+        "oil": -0.1,
+        "remittances": 0.1,
+        "rationale": "Growth/valuation-sensitive to discount rates (-0.2). The dominant driver is USD export revenue against a PKR cost base, so PKR depreciation directly expands margins (Systems, NetSol etc.) (+0.7). Oil is a negligible cost item (-0.1). Remittances proxy diaspora/consumption but link is weak (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "US rate hikes",
+          "sign": -0.2,
+          "channel": "Client IT-budget compression and de-rating of global tech multiples"
+        },
+        {
+          "shock": "US/EU recession",
+          "sign": -0.3,
+          "channel": "Discretionary IT-services spend and new-logo pipeline contract"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Second-order global demand drag"
+        }
+      ],
+      "upstream": [],
+      "downstream": [
+        "Commercial Banks",
+        "Insurance"
+      ]
+    },
+    {
+      "code": "0829",
+      "name": "Textile Composite",
+      "key_tickers": [
+        "NML",
+        "ILP",
+        "GATM",
+        "NCL",
+        "KTML"
+      ],
+      "inputs": [
+        "Raw cotton (local + imported)",
+        "Yarn & greige fabric",
+        "Dyes & chemicals",
+        "Energy (RLNG/gas + captive)",
+        "Imported machinery"
+      ],
+      "outputs": [
+        "Value-added home textiles",
+        "Bed linen & towels",
+        "Garments/apparel (exports to US/EU)",
+        "Processed fabric"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.4,
+        "pkr_depreciation": 0.7,
+        "oil": -0.2,
+        "remittances": 0.1,
+        "rationale": "Levered on LTFF/TERF and working capital, so rate hikes raise financing cost though export refinance is concessional (-0.4). The dominant driver is USD export revenue against PKR costs, making PKR depreciation strongly positive (+0.7). Oil lifts energy cost (-0.2). Remittances have a small domestic-retail link (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global cotton price",
+          "sign": -0.3,
+          "channel": "Raw cotton is the primary input; higher prices compress margins"
+        },
+        {
+          "shock": "US/EU demand (recession)",
+          "sign": -0.4,
+          "channel": "US and EU are the key export destinations for home textiles/apparel"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Regional pricing and order-flow competition dynamics"
+        }
+      ],
+      "upstream": [
+        "Textile Spinning",
+        "Chemical",
+        "Power Generation & Distribution"
+      ],
+      "downstream": []
+    },
+    {
+      "code": "0830",
+      "name": "Textile Spinning",
+      "key_tickers": [
+        "GADT",
+        "NCL",
+        "SITC",
+        "KOSM"
+      ],
+      "inputs": [
+        "Raw cotton (local + imported US/Brazil)",
+        "Man-made fibre (PSF/viscose)",
+        "Energy"
+      ],
+      "outputs": [
+        "Cotton & blended yarn (to weaving/composite + export)"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.4,
+        "pkr_depreciation": 0.4,
+        "oil": -0.2,
+        "remittances": 0,
+        "rationale": "Highly working-capital-intensive (cotton procurement) and levered, so rate hikes bite (-0.4). Yarn export and import-parity domestic pricing make PKR depreciation positive, though less than composites since input cotton may also be imported (+0.4). Oil lifts energy cost (-0.2). No direct remittance channel."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global cotton price",
+          "sign": -0.4,
+          "channel": "Cotton is 60-70% of yarn cost; the single most important margin driver"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.2,
+          "channel": "China is a major yarn export destination; weak demand hits volumes/prices"
+        },
+        {
+          "shock": "US demand",
+          "sign": -0.1,
+          "channel": "Downstream apparel demand feeds back into yarn orders"
+        }
+      ],
+      "upstream": [
+        "Chemical"
+      ],
+      "downstream": [
+        "Textile Composite",
+        "Textile Weaving",
+        "Synthetic & Rayon"
+      ]
+    },
+    {
+      "code": "0826",
+      "name": "Sugar & Allied",
+      "key_tickers": [
+        "JDWS",
+        "ALNRS",
+        "HABSM",
+        "MRNS"
+      ],
+      "inputs": [
+        "Sugarcane (local, support-price fixed)",
+        "Bagasse (captive cogeneration fuel)",
+        "Energy & chemicals"
+      ],
+      "outputs": [
+        "Refined sugar",
+        "Molasses",
+        "Ethanol (export)",
+        "Bagasse-based power"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.3,
+        "pkr_depreciation": 0.2,
+        "oil": 0.1,
+        "remittances": 0.1,
+        "rationale": "Seasonal crushing requires large short-term financing, so rate hikes raise cost (-0.3). PKR depreciation helps the ethanol/molasses export leg (+0.2). Oil is mildly positive via ethanol/biofuel price linkage (+0.1). Remittances give a small consumption lift (+0.1). Government support price and export-permission policy are the dominant swing factors."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global sugar/ethanol price",
+          "sign": 0.2,
+          "channel": "Export realisations on surplus sugar and ethanol track world prices"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Weaker regional molasses/ethanol demand"
+        }
+      ],
+      "upstream": [
+        "Fertilizer"
+      ],
+      "downstream": [
+        "Food & Personal Care Products",
+        "Power Generation & Distribution"
+      ]
+    },
+    {
+      "code": "0832",
+      "name": "Tobacco",
+      "key_tickers": [
+        "PAKT",
+        "PMPK"
+      ],
+      "inputs": [
+        "Tobacco leaf (local growers)",
+        "Imported filters/packaging",
+        "Energy"
+      ],
+      "outputs": [
+        "Cigarettes (premium + value)"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.1,
+        "pkr_depreciation": -0.1,
+        "oil": -0.1,
+        "remittances": 0.1,
+        "rationale": "Defensive, cash-rich, near-zero leverage; minimal rate sensitivity (-0.1). Multinationals import some inputs, giving a mild PKR-depreciation cost (-0.1). Oil is a minor logistics cost (-0.1). Remittances give a small consumption lift (+0.1). Federal Excise Duty (FED) hikes and illicit-trade share are the overwhelming earnings drivers, dwarfing standard macro factors."
+      },
+      "global_exposure": [
+        {
+          "shock": "US rate hikes",
+          "sign": -0.05,
+          "channel": "Minor; defensive cash flows largely insulated"
+        },
+        {
+          "shock": "Global leaf price",
+          "sign": -0.1,
+          "channel": "Input cost for the small imported-blend component"
+        }
+      ],
+      "upstream": [],
+      "downstream": []
+    },
+    {
+      "code": "0811",
+      "name": "Glass & Ceramics",
+      "key_tickers": [
+        "TGL",
+        "GHGL",
+        "STCL"
+      ],
+      "inputs": [
+        "Soda ash",
+        "Silica sand (local)",
+        "Natural gas (melting furnaces)",
+        "Imported machinery & tiles competition"
+      ],
+      "outputs": [
+        "Container/float glass",
+        "Tableware",
+        "Ceramic tiles & sanitaryware"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.4,
+        "pkr_depreciation": -0.2,
+        "oil": -0.3,
+        "remittances": 0.2,
+        "rationale": "Demand from construction, autos and pharma packaging is rate-sensitive, and expansions are levered (-0.4). Imported soda ash/machinery give a PKR-depreciation cost (-0.2). Gas/energy-intensive melting makes oil/energy inflation materially negative (-0.3). Remittances feed construction demand (+0.2)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.2,
+          "channel": "Furnace energy cost inflation"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Cheaper Chinese tile/glass imports intensify competition"
+        },
+        {
+          "shock": "Imported gas/energy price",
+          "sign": -0.2,
+          "channel": "Gas is the core melting cost"
+        }
+      ],
+      "upstream": [
+        "Chemical",
+        "Power Generation & Distribution"
+      ],
+      "downstream": [
+        "Automobile Assembler",
+        "Pharmaceuticals",
+        "Food & Personal Care Products",
+        "Real Estate Investment Trust"
+      ]
+    },
+    {
+      "code": "0812",
+      "name": "Insurance",
+      "key_tickers": [
+        "EFUG",
+        "AICL",
+        "JGICL",
+        "IGIHL"
+      ],
+      "inputs": [
+        "Capital & reserves",
+        "Imported reinsurance capacity",
+        "Actuarial & underwriting expertise"
+      ],
+      "outputs": [
+        "General insurance (fire, marine, motor)",
+        "Life insurance/family takaful",
+        "Investment income"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": 0.3,
+        "pkr_depreciation": 0.1,
+        "oil": 0,
+        "remittances": 0.1,
+        "rationale": "Investment portfolios (fixed income + equities) benefit from higher yields, so rate hikes lift investment income (+0.3). PKR depreciation modestly raises rupee asset/sum-insured values but also foreign reinsurance cost (+0.1). Oil is neutral. Remittances give a mild savings/policy-demand lift (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "US rate hikes",
+          "sign": 0.1,
+          "channel": "Higher yields on investment book, offset by equity-market beta"
+        },
+        {
+          "shock": "Global reinsurance rates (hardening)",
+          "sign": -0.1,
+          "channel": "Higher ceded reinsurance cost compresses retention margins"
+        },
+        {
+          "shock": "Catastrophe/floods",
+          "sign": -0.3,
+          "channel": "Elevated claims on general/crop lines (e.g. 2022 floods)"
+        }
+      ],
+      "upstream": [
+        "Commercial Banks"
+      ],
+      "downstream": [
+        "Commercial Banks",
+        "Automobile Assembler"
+      ]
+    },
+    {
+      "code": "0822",
+      "name": "Paper, Board & Packaging",
+      "key_tickers": [
+        "PKGS",
+        "CPPL",
+        "CENTURY"
+      ],
+      "inputs": [
+        "Imported virgin pulp & waste paper",
+        "Energy",
+        "Chemicals & starch"
+      ],
+      "outputs": [
+        "Packaging board & cartons",
+        "Writing/printing paper",
+        "Corrugated & flexible packaging"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.3,
+        "pkr_depreciation": -0.3,
+        "oil": -0.2,
+        "remittances": 0.1,
+        "rationale": "Cyclical, capital-intensive; rate hikes hit FMCG-linked demand and financing (-0.3). Imported pulp/waste paper makes PKR depreciation a clear cost negative (-0.3). Oil raises energy and transport cost (-0.2). Remittances give a small FMCG-consumption proxy (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global pulp/waste-paper price",
+          "sign": -0.4,
+          "channel": "Imported fibre is the dominant input cost"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0.1,
+          "channel": "Softer global pulp demand can ease input prices"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.1,
+          "channel": "Energy and freight cost inflation"
+        }
+      ],
+      "upstream": [
+        "Chemical",
+        "Power Generation & Distribution"
+      ],
+      "downstream": [
+        "Food & Personal Care Products",
+        "Pharmaceuticals",
+        "Tobacco"
+      ]
+    },
+    {
+      "code": "0810",
+      "name": "Food & Personal Care Products",
+      "key_tickers": [
+        "NESTLE",
+        "EFOODS",
+        "NATF",
+        "UPFL",
+        "COLG"
+      ],
+      "inputs": [
+        "Raw milk (local)",
+        "Imported palm oil",
+        "Wheat & sugar",
+        "Packaging",
+        "Energy"
+      ],
+      "outputs": [
+        "Dairy & nutrition",
+        "Edible oils/ghee & culinary",
+        "Personal & home care"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": -0.3,
+        "oil": -0.2,
+        "remittances": 0.3,
+        "rationale": "Defensive staples with moderate rate sensitivity via financing and premium-mix demand (-0.2). Imported palm oil and inputs make PKR depreciation a cost negative (-0.3). Oil raises palm-oil correlation and transport cost (-0.2). Rising remittances lift disposable income and branded-consumption trade-up (+0.3)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global palm oil price",
+          "sign": -0.4,
+          "channel": "Palm oil is a core imported input for edible-oil/ghee and processed foods"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0,
+          "channel": "Limited direct exposure"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.1,
+          "channel": "Freight and packaging-resin cost inflation"
+        }
+      ],
+      "upstream": [
+        "Sugar & Allied",
+        "Paper, Board & Packaging",
+        "Chemical"
+      ],
+      "downstream": []
+    },
+    {
+      "code": "0803",
+      "name": "Cable & Electrical Goods",
+      "key_tickers": [
+        "PAEL",
+        "PCAL",
+        "WAVES"
+      ],
+      "inputs": [
+        "Copper & aluminium",
+        "PVC & XLPE compounds",
+        "Steel",
+        "Imported electronic components"
+      ],
+      "outputs": [
+        "Power & building wires/cables",
+        "Transformers & switchgear",
+        "Home appliances & consumer electronics"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.5,
+        "pkr_depreciation": -0.4,
+        "oil": -0.2,
+        "remittances": 0.3,
+        "rationale": "Consumer-durables and construction demand are rate-sensitive (financing + affordability) and the sector is levered (-0.5). Copper/aluminium and imported components make PKR depreciation a cost negative (-0.4). Oil lifts PVC/energy/freight cost (-0.2). Remittances strongly drive appliance and construction/wiring demand (+0.3)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global copper price",
+          "sign": -0.4,
+          "channel": "Copper is the dominant cable input; LME price swings drive margins"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0.1,
+          "channel": "Cheaper Chinese components/base metals ease input cost, offset by import competition"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.1,
+          "channel": "PVC feedstock and freight cost"
+        }
+      ],
+      "upstream": [
+        "Engineering",
+        "Chemical"
+      ],
+      "downstream": [
+        "Automobile Assembler",
+        "Real Estate Investment Trust",
+        "Power Generation & Distribution"
+      ]
+    },
+    {
+      "code": "0827",
+      "name": "Synthetic & Rayon",
+      "key_tickers": [
+        "IBFL",
+        "RUPL",
+        "DNCC"
+      ],
+      "inputs": [
+        "Imported PTA & MEG (polyester feedstock)",
+        "Wood pulp (viscose)",
+        "Energy"
+      ],
+      "outputs": [
+        "Polyester staple fibre (PSF)",
+        "Filament/blended yarn",
+        "Viscose"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.3,
+        "pkr_depreciation": -0.2,
+        "oil": 0.1,
+        "remittances": 0,
+        "rationale": "Cyclical, moderately levered; rate hikes hit downstream textile demand and financing (-0.3). Imported PTA/MEG make PKR depreciation a cost, partly offset by import-parity PSF pricing (-0.2). Oil is mildly positive because PSF/PTA prices track the crude-oil/petrochemical chain (+0.1). No direct remittance channel."
+      },
+      "global_exposure": [
+        {
+          "shock": "China slowdown",
+          "sign": -0.3,
+          "channel": "Global PSF/PTA prices are set by Chinese oversupply and demand"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": 0.1,
+          "channel": "Higher oil lifts polyester-chain prices, feedstock lag permitting"
+        },
+        {
+          "shock": "Global cotton price",
+          "sign": 0.2,
+          "channel": "High cotton prices drive substitution demand toward polyester fibre"
+        }
+      ],
+      "upstream": [
+        "Chemical",
+        "Oil & Gas Exploration"
+      ],
+      "downstream": [
+        "Textile Spinning",
+        "Textile Composite"
+      ]
+    },
+    {
+      "code": "0813",
+      "name": "Inv. Banks / Inv. Cos. / Securities",
+      "key_tickers": [
+        "JSGCL",
+        "AKDSL",
+        "IGIHL"
+      ],
+      "inputs": [
+        "Capital & liquidity",
+        "Trading/execution infrastructure",
+        "Research talent"
+      ],
+      "outputs": [
+        "Brokerage & commission",
+        "Advisory/capital-markets fees",
+        "Proprietary trading & investment income"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.3,
+        "pkr_depreciation": 0,
+        "oil": -0.1,
+        "remittances": 0.1,
+        "rationale": "High rates depress equity-market turnover and valuations, cutting brokerage volumes and prop-book marks, only partly offset by treasury income (-0.3). PKR depreciation is broadly neutral to activity. Oil is a weak macro-sentiment negative (-0.1). Remittances lift retail-investor participation modestly (+0.1). Market cycle/turnover is the dominant driver."
+      },
+      "global_exposure": [
+        {
+          "shock": "US rate hikes",
+          "sign": -0.2,
+          "channel": "Frontier equity outflows and risk-off reduce market turnover"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": -0.1,
+          "channel": "Regional risk sentiment and flows"
+        },
+        {
+          "shock": "MSCI/frontier reclassification & inflows",
+          "sign": 0.3,
+          "channel": "Passive/active foreign inflows lift turnover and fee pools"
+        }
+      ],
+      "upstream": [
+        "Commercial Banks"
+      ],
+      "downstream": []
+    },
+    {
+      "code": "0836",
+      "name": "Real Estate Investment Trust",
+      "key_tickers": [
+        "DCR"
+      ],
+      "inputs": [
+        "Land & developed property",
+        "Construction (cement/steel)",
+        "Project & acquisition financing"
+      ],
+      "outputs": [
+        "Rental income (retail/office/residential)",
+        "Capital appreciation distributions"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.5,
+        "pkr_depreciation": 0.2,
+        "oil": 0,
+        "remittances": 0.4,
+        "rationale": "Property values and unit yields are highly discount-rate-sensitive, and development is financed, so rate hikes hurt (-0.5). Real estate is an inflation/PKR hedge and some rentals are USD-linked, giving mild positive to depreciation (+0.2). Oil is neutral. Remittances are a major driver of real-estate demand and valuations from the diaspora (+0.4)."
+      },
+      "global_exposure": [
+        {
+          "shock": "US rate hikes",
+          "sign": -0.2,
+          "channel": "Higher global discount rates weigh on cap rates and diaspora financing"
+        },
+        {
+          "shock": "China slowdown",
+          "sign": 0,
+          "channel": "Limited direct exposure"
+        }
+      ],
+      "upstream": [
+        "Cement",
+        "Engineering",
+        "Cable & Electrical Goods",
+        "Commercial Banks"
+      ],
+      "downstream": []
+    },
+    {
+      "code": "0833",
+      "name": "Transport",
+      "key_tickers": [
+        "PNSC",
+        "PICT",
+        "PIBTL"
+      ],
+      "inputs": [
+        "Bunker/HSD fuel",
+        "Imported vessels & port equipment",
+        "Port/terminal infrastructure"
+      ],
+      "outputs": [
+        "Ocean freight/shipping",
+        "Container & bulk port handling",
+        "Logistics"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": 0.3,
+        "oil": -0.2,
+        "remittances": 0.1,
+        "rationale": "Capital-intensive with vessel/expansion debt; mild rate-hike drag (-0.2). Freight and port tariffs are largely USD-denominated, so PKR depreciation lifts PKR revenue (PNSC, terminals) (+0.3). Oil raises bunker-fuel cost, though liner freight rates can rise too; net negative for ports (-0.2). Remittances give a weak trade-volume link (+0.1)."
+      },
+      "global_exposure": [
+        {
+          "shock": "China slowdown",
+          "sign": -0.3,
+          "channel": "Weaker trade volumes cut container/bulk throughput"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.2,
+          "channel": "Bunker-fuel cost, partly offset by higher freight rates and PNSC tanker demand"
+        },
+        {
+          "shock": "Global freight rates",
+          "sign": 0.3,
+          "channel": "Higher charter/freight rates lift shipping revenue"
+        }
+      ],
+      "upstream": [
+        "Oil & Gas Marketing"
+      ],
+      "downstream": [
+        "Cement",
+        "Engineering",
+        "Textile Composite",
+        "Automobile Assembler"
+      ]
+    },
+    {
+      "code": "0834",
+      "name": "Vanaspati & Allied",
+      "key_tickers": [
+        "PUOM",
+        "ASHT"
+      ],
+      "inputs": [
+        "Imported palm oil (crude/RBD)",
+        "Soybean/canola oil",
+        "Energy & packaging"
+      ],
+      "outputs": [
+        "Vanaspati ghee",
+        "Cooking oil",
+        "Banaspati/margarine"
+      ],
+      "macro_sensitivity": {
+        "policy_rate": -0.2,
+        "pkr_depreciation": -0.4,
+        "oil": -0.3,
+        "remittances": 0.2,
+        "rationale": "Thin-margin staple processing with working-capital financing (-0.2). Palm oil is almost entirely imported, so PKR depreciation directly inflates the dominant raw-material cost (-0.4). Oil rise correlates with palm-oil prices and raises freight (-0.3). Remittances support staple consumption/affordability (+0.2)."
+      },
+      "global_exposure": [
+        {
+          "shock": "Global palm oil price",
+          "sign": -0.5,
+          "channel": "Palm oil is 80%+ of COGS; Indonesia/Malaysia price and export-policy shocks dominate"
+        },
+        {
+          "shock": "Hormuz/oil spike",
+          "sign": -0.2,
+          "channel": "Freight and energy cost plus vegetable-oil price correlation"
+        }
+      ],
+      "upstream": [
+        "Paper, Board & Packaging"
+      ],
+      "downstream": [
+        "Food & Personal Care Products"
+      ]
+    }
+  ],
+  "causal_chains": [
+    {
+      "trigger": "Government launches/revives a subsidised low-cost housing finance scheme (Mera Pakistan Mera Ghar-type mark-up subsidy)",
+      "mechanism": "Subsidised mortgage rates unlock latent housing demand, driving construction starts. Cement, rebar/long-steel, glass, wiring/cable and sanitaryware offtake rise; banks book subsidised mortgage assets (govt bears the mark-up differential) growing consumer-loan books; REIT/real-estate values re-rate. Effect is strongest when the policy rate is low so the subsidy gap is affordable for the exchequer.",
+      "affected": [
+        {
+          "sector": "Cement",
+          "sign": 0.7
+        },
+        {
+          "sector": "Engineering",
+          "sign": 0.7
+        },
+        {
+          "sector": "Glass & Ceramics",
+          "sign": 0.5
+        },
+        {
+          "sector": "Cable & Electrical Goods",
+          "sign": 0.5
+        },
+        {
+          "sector": "Commercial Banks",
+          "sign": 0.4
+        },
+        {
+          "sector": "Real Estate Investment Trust",
+          "sign": 0.5
+        }
+      ],
+      "evidence": "2020-21 SBP Mera Pakistan Mera Ghar low-cost housing scheme with mark-up subsidy drove a cement-demand and construction-package rally; construction was granted amnesty/incentive package (empirical)."
+    },
+    {
+      "trigger": "New EV / auto policy with duty concessions on EVs and charging infrastructure and higher tariffs protecting local assembly",
+      "mechanism": "EV incentives shift demand toward electric drivetrains and lift long-run electricity demand, favouring power generation/distribution and cable/charging infrastructure. Incumbent ICE assemblers face transition capex and margin risk from new (often Chinese) entrants; over time petrol/HSD volume growth for OMCs is capped. Auto-parts localisation requirements can benefit domestic vendors.",
+      "affected": [
+        {
+          "sector": "Automobile Assembler",
+          "sign": -0.1
+        },
+        {
+          "sector": "Power Generation & Distribution",
+          "sign": 0.3
+        },
+        {
+          "sector": "Cable & Electrical Goods",
+          "sign": 0.3
+        },
+        {
+          "sector": "Automobile Parts & Accessories",
+          "sign": 0.2
+        },
+        {
+          "sector": "Oil & Gas Marketing",
+          "sign": -0.3
+        }
+      ],
+      "evidence": "Pakistan's 2019 National EV Policy targeted EV penetration with duty concessions; new Chinese EV entrants (BYD, MG) intensifying incumbent competition (directional/logic + policy record)."
+    },
+    {
+      "trigger": "Pakistan enters a new IMF programme (EFF/EFF-successor) with upfront conditions",
+      "mechanism": "IMF conditionality forces PKR to a market-clearing (weaker) level, policy-rate hikes to anchor inflation, fiscal tightening and tariff/subsidy reform. Near term this compresses domestic-cyclical demand (cement, autos, steel, consumer durables) via high rates and squeezed disposable income; banks benefit from higher rates and re-priced sovereign books; USD-earning exporters and E&Ps/IPPs gain from depreciation. Crucially, programme approval de-risks the sovereign, unlocks bilateral/multilateral inflows and typically triggers a broad market re-rating once stability is priced.",
+      "affected": [
+        {
+          "sector": "Commercial Banks",
+          "sign": 0.4
+        },
+        {
+          "sector": "Textile Composite",
+          "sign": 0.4
+        },
+        {
+          "sector": "Technology & Communication",
+          "sign": 0.4
+        },
+        {
+          "sector": "Oil & Gas Exploration",
+          "sign": 0.3
+        },
+        {
+          "sector": "Cement",
+          "sign": -0.4
+        },
+        {
+          "sector": "Automobile Assembler",
+          "sign": -0.5
+        },
+        {
+          "sector": "Inv. Banks / Inv. Cos. / Securities",
+          "sign": 0.3
+        }
+      ],
+      "evidence": "2023 IMF SBA and 2024 EFF: PKR devaluation, policy rate to 22%, followed by a strong KSE-100 re-rating as default risk receded (empirical)."
+    },
+    {
+      "trigger": "Strait of Hormuz closure / geopolitical oil-supply shock spiking Brent sharply",
+      "mechanism": "Higher crude directly boosts E&P realisations and refinery GRMs/inventory gains, and OMCs book inventory gains. But the wider import bill widens, pressuring PKR and reserves; furnace-oil power cost and circular debt worsen; energy-intensive and import-dependent cyclicals (cement, autos, glass, chemicals) face cost-push and demand destruction; inflation forces rates higher, hurting rate-sensitive sectors.",
+      "affected": [
+        {
+          "sector": "Oil & Gas Exploration",
+          "sign": 0.7
+        },
+        {
+          "sector": "Refinery",
+          "sign": 0.4
+        },
+        {
+          "sector": "Oil & Gas Marketing",
+          "sign": 0.2
+        },
+        {
+          "sector": "Power Generation & Distribution",
+          "sign": -0.3
+        },
+        {
+          "sector": "Cement",
+          "sign": -0.4
+        },
+        {
+          "sector": "Automobile Assembler",
+          "sign": -0.3
+        },
+        {
+          "sector": "Glass & Ceramics",
+          "sign": -0.3
+        }
+      ],
+      "evidence": "Pakistan imports the bulk of its oil needs and is a net energy importer; oil spikes historically widen the current-account deficit and pressure PKR (structural/logic; ~15-20% of imports are petroleum group)."
+    },
+    {
+      "trigger": "Major cotton crop failure (floods/pest) cutting the domestic cotton harvest",
+      "mechanism": "A short local crop forces higher raw-cotton imports at a time of firm global prices and a weak PKR, sharply raising the dominant input cost for spinners and composites and squeezing margins. Value-added composites with pricing power and forward cover fare relatively better than pure spinners; fertiliser/agri-input demand is disrupted for the season.",
+      "affected": [
+        {
+          "sector": "Textile Spinning",
+          "sign": -0.5
+        },
+        {
+          "sector": "Textile Composite",
+          "sign": -0.3
+        },
+        {
+          "sector": "Synthetic & Rayon",
+          "sign": 0.2
+        },
+        {
+          "sector": "Fertilizer",
+          "sign": -0.1
+        }
+      ],
+      "evidence": "2022 floods slashed the cotton crop, forcing large cotton imports and compressing spinning margins (empirical)."
+    },
+    {
+      "trigger": "OGRA/government raises natural-gas (feedstock and captive) tariffs",
+      "mechanism": "Higher feedstock gas raises urea production cost for fertiliser producers (margin hit unless fully passed through to farmers), while higher captive/RLNG tariffs raise energy cost for textiles, glass and other gas-intensive industry, eroding export competitiveness and margins. Fertiliser demand can also soften if urea prices are raised to protect margins.",
+      "affected": [
+        {
+          "sector": "Fertilizer",
+          "sign": -0.5
+        },
+        {
+          "sector": "Textile Composite",
+          "sign": -0.3
+        },
+        {
+          "sector": "Textile Spinning",
+          "sign": -0.2
+        },
+        {
+          "sector": "Glass & Ceramics",
+          "sign": -0.3
+        },
+        {
+          "sector": "Chemical",
+          "sign": -0.2
+        }
+      ],
+      "evidence": "Repeated gas tariff/GIDC and feedstock-price hikes (2019-2023) pressured fertiliser margins and captive-power textile costs (empirical/policy record)."
+    },
+    {
+      "trigger": "Government imposes a super-tax / one-off windfall levy on high-earning sectors",
+      "mechanism": "A retrospective super-tax (e.g. up to 10%) directly cuts post-tax earnings and payout capacity for the most profitable, well-capitalised sectors — banks, fertiliser, E&Ps and large-cap cement — compressing EPS and dividend yields and de-rating those names, with knock-on drag on the index given their weight.",
+      "affected": [
+        {
+          "sector": "Commercial Banks",
+          "sign": -0.4
+        },
+        {
+          "sector": "Fertilizer",
+          "sign": -0.3
+        },
+        {
+          "sector": "Oil & Gas Exploration",
+          "sign": -0.3
+        },
+        {
+          "sector": "Cement",
+          "sign": -0.2
+        }
+      ],
+      "evidence": "FY2022 budget's 10% super-tax on large sectors and elevated bank ADR-linked taxation cut sector earnings and triggered de-rating (empirical)."
+    },
+    {
+      "trigger": "CPEC phase-2 / renewed Chinese financing for infrastructure, SEZs and power projects",
+      "mechanism": "Fresh Chinese-financed infrastructure, industrial-zone and power build-out lifts structural demand for cement, long/flat steel, power equipment and cabling, and improves construction-cycle visibility. Coal-IPP and transmission projects support power names; sustained project pipeline supports cement/steel utilisation.",
+      "affected": [
+        {
+          "sector": "Cement",
+          "sign": 0.5
+        },
+        {
+          "sector": "Engineering",
+          "sign": 0.5
+        },
+        {
+          "sector": "Power Generation & Distribution",
+          "sign": 0.3
+        },
+        {
+          "sector": "Cable & Electrical Goods",
+          "sign": 0.3
+        }
+      ],
+      "evidence": "CPEC phase-1 (2015-2020) drove a cement/steel capacity and demand upcycle; phase-2 SEZ/industrial focus (directional, based on prior CPEC impact)."
+    },
+    {
+      "trigger": "SBP begins a policy-rate cutting cycle as inflation decelerates",
+      "mechanism": "Falling rates revive auto financing and construction demand, cut financing cost for levered cyclicals, and lift discounted valuations of high-payout and long-duration assets (REIT, cement). Banks face NIM compression on the asset-sensitive book, partly offset by improving asset quality, credit growth and capital gains on their bond portfolios.",
+      "affected": [
+        {
+          "sector": "Cement",
+          "sign": 0.6
+        },
+        {
+          "sector": "Automobile Assembler",
+          "sign": 0.6
+        },
+        {
+          "sector": "Engineering",
+          "sign": 0.5
+        },
+        {
+          "sector": "Real Estate Investment Trust",
+          "sign": 0.5
+        },
+        {
+          "sector": "Commercial Banks",
+          "sign": -0.1
+        },
+        {
+          "sector": "Inv. Banks / Inv. Cos. / Securities",
+          "sign": 0.4
+        }
+      ],
+      "evidence": "2024-25 SBP easing cycle (policy rate cut from 22% toward low-teens) drove a cyclicals and broad-market rally (empirical)."
+    },
+    {
+      "trigger": "Sharp, disorderly PKR depreciation episode",
+      "mechanism": "A large rupee slide instantly boosts PKR earnings of USD exporters (textiles, IT) and USD-linked E&Ps and IPPs, but raises input costs and squeezes importers — auto assemblers (CKD), pharma (APIs), chemicals (feedstock), vanaspati (palm oil) and food. It also stokes inflation, pulling forward rate hikes.",
+      "affected": [
+        {
+          "sector": "Technology & Communication",
+          "sign": 0.7
+        },
+        {
+          "sector": "Textile Composite",
+          "sign": 0.6
+        },
+        {
+          "sector": "Oil & Gas Exploration",
+          "sign": 0.6
+        },
+        {
+          "sector": "Power Generation & Distribution",
+          "sign": 0.3
+        },
+        {
+          "sector": "Automobile Assembler",
+          "sign": -0.7
+        },
+        {
+          "sector": "Pharmaceuticals",
+          "sign": -0.5
+        },
+        {
+          "sector": "Vanaspati & Allied",
+          "sign": -0.4
+        }
+      ],
+      "evidence": "2022-23 PKR slide from ~175 to ~300/USD lifted IT/textile exporter earnings while crushing auto volumes and pharma margins (empirical)."
+    },
+    {
+      "trigger": "Global cotton price spike (ICE/NY futures surge)",
+      "mechanism": "Higher international cotton lifts the primary input cost for spinners and composites. Pure spinners with limited pricing power are hit hardest; integrated value-added exporters can pass some cost through and may gain if selling prices reset upward. Substitution demand pushes toward polyester fibre.",
+      "affected": [
+        {
+          "sector": "Textile Spinning",
+          "sign": -0.4
+        },
+        {
+          "sector": "Textile Composite",
+          "sign": -0.2
+        },
+        {
+          "sector": "Synthetic & Rayon",
+          "sign": 0.2
+        }
+      ],
+      "evidence": "2021-22 global cotton rally to multi-year highs compressed Pakistani spinning margins and boosted PSF substitution demand (empirical)."
+    },
+    {
+      "trigger": "Government resolves/reduces power-sector circular debt via a bond issuance or tariff/settlement package",
+      "mechanism": "Clearing stranded receivables improves cash flows and reduces working-capital financing for IPPs, OMCs and E&Ps (whose gas/oil dues sit at the top of the chain). It de-risks dividends for HUBC/KAPCO-type names and improves PSO/SNGP/SSGC liquidity, supporting a re-rating across the energy chain.",
+      "affected": [
+        {
+          "sector": "Power Generation & Distribution",
+          "sign": 0.5
+        },
+        {
+          "sector": "Oil & Gas Marketing",
+          "sign": 0.4
+        },
+        {
+          "sector": "Oil & Gas Exploration",
+          "sign": 0.3
+        }
+      ],
+      "evidence": "Periodic circular-debt payment/PIB-issuance settlements (2013, 2020-21) improved energy-chain liquidity and payouts (empirical)."
+    },
+    {
+      "trigger": "US Fed rate-cut cycle plus frontier/EM inflows and improved Pakistan external position",
+      "mechanism": "Lower US rates and risk-on flows favour high-beta frontier markets; combined with a stable PKR and reserves, foreign and leveraged local flows return to PSX. High-beta and index-heavy sectors — banks, E&Ps, cement — and brokerage/securities firms benefit most from rising turnover and re-rating.",
+      "affected": [
+        {
+          "sector": "Inv. Banks / Inv. Cos. / Securities",
+          "sign": 0.5
+        },
+        {
+          "sector": "Commercial Banks",
+          "sign": 0.3
+        },
+        {
+          "sector": "Cement",
+          "sign": 0.3
+        },
+        {
+          "sector": "Oil & Gas Exploration",
+          "sign": 0.3
+        }
+      ],
+      "evidence": "Historically PSX turnover and foreign flows correlate with global risk appetite and Fed cycle; MSCI FM inclusion episodes lifted turnover (directional/logic + prior flow behaviour)."
+    },
+    {
+      "trigger": "Government grants sugar export permission alongside a higher cane support price",
+      "mechanism": "Export permission clears domestic surplus and lets mills realise firm world prices in USD, while a higher support price raises cane cost but is typically more than offset by better sugar and molasses/ethanol realisations; bagasse cogeneration adds a secondary earnings leg.",
+      "affected": [
+        {
+          "sector": "Sugar & Allied",
+          "sign": 0.5
+        },
+        {
+          "sector": "Food & Personal Care Products",
+          "sign": -0.1
+        }
+      ],
+      "evidence": "Periodic sugar export approvals during surplus years improved mill realisations; support-price hikes raise input cost for downstream food users (empirical/policy record)."
+    }
+  ]
+}

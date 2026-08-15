@@ -1,0 +1,57 @@
+date,rate,change_bps,source
+2019-07-16,13.25,100,https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS 16-Jul-2019; corroborated tribune.com.pk/story/2254560)
+2019-09-16,13.25,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Sep-2019, hold)"
+2019-11-22,13.25,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Nov-2019, hold)"
+2020-01-28,13.25,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Jan-2020, hold)"
+2020-03-17,12.5,-75,https://www.sbp.org.pk/COVID2/Monetary.html; tribune.com.pk/story/2254560
+2020-03-24,11,-150,https://www.sbp.org.pk/COVID2/Monetary.html; dawn.com/news/1549747
+2020-04-16,9,-200,https://www.dawn.com/news/1549747
+2020-05-15,8,-100,https://www.sbp.org.pk/COVID2/Monetary.html
+2020-06-25,7,-100,https://profit.pakistantoday.com.pk/2020/06/25/covid-cut-sbp-slashes-interest-rate-to-7pc/
+2020-09-21,7,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Sep-2020, hold)"
+2020-11-23,7,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Nov-2020, hold)"
+2021-01-22,7,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Jan-2021, hold)"
+2021-03-19,7,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Mar-2021, hold)"
+2021-05-28,7,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS May-2021, hold)"
+2021-07-27,7,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Jul-2021, hold)"
+2021-09-20,7.25,25,https://www.dawn.com/news/1647427
+2021-11-19,8.75,150,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2021-12-14,9.75,100,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2022-01-24,9.75,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Jan-2022, hold)"
+2022-03-08,9.75,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Mar-2022, hold)"
+2022-04-07,12.25,250,https://www.sbp.org.pk/m_policy/mon.asp (emergency MPC 07-Apr-2022); tradingeconomics.com/pakistan/interest-rate
+2022-05-23,13.75,150,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2022-07-07,15,125,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2022-08-22,15,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Aug-2022, hold)"
+2022-10-10,15,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Oct-2022, hold)"
+2022-11-25,16,100,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2023-01-23,17,100,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2023-03-02,20,300,https://www.sbp.org.pk/m_policy/2023/MPS-Mar-2023-Eng.pdf
+2023-04-04,21,100,https://tribune.com.pk/story/2409846/sbp-hikes-policy-rate-by-100bps-to-record-high-of-21
+2023-06-26,22,100,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2023-07-31,22,0,https://tribune.com.pk/story/2454831/sbp-holds-policy-rate-at-record-22
+2023-09-14,22,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Sep-2023, hold)"
+2023-10-30,22,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Oct-2023, hold)"
+2023-12-12,22,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Dec-2023, hold)"
+2024-01-29,22,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Jan-2024, hold)"
+2024-03-18,22,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Mar-2024, hold)"
+2024-04-29,22,0,"https://www.sbp.org.pk/m_policy/mon.asp (SBP MPS Apr-2024, hold)"
+2024-06-10,20.5,-150,https://www.brecorder.com/news/40307703
+2024-07-29,19.5,-100,https://www.sbp.org.pk/m_policy/mon.asp; tradingeconomics.com/pakistan/interest-rate
+2024-09-12,17.5,-200,https://www.brecorder.com/news/40322106
+2024-11-04,15,-250,https://www.capitaleconomics.com/publications/asia-rapid-response/pakistan-monetary-policy-meeting-november-2024
+2024-12-16,13,-200,https://www.brecorder.com/news/40337803
+2025-01-27,12,-100,https://macropakistani.substack.com/p/sbp-cuts-interest-rate-to-12
+2025-03-10,12,0,https://english.aaj.tv/news/330406506/state-bank-of-pakistan-maintains-policy-rate-at-12
+2025-05-05,11,-100,https://tribune.com.pk/story/2544203/policy-rate-slashed-to-11
+2025-06-16,11,0,https://www.sbp.org.pk/m_policy/2025/MPS-Jun-2025-Eng.pdf; dawn.com/news/1927601
+2025-07-30,11,0,https://www.sbp.org.pk/m_policy/2025/MPS-July-2025-Eng.pdf
+2025-09-15,11,0,https://www.sbp.org.pk/m_policy/2025/MPS-Sep-2025-Eng.pdf; tribune.com.pk/story/2574445
+2025-10-27,11,0,https://www.sbp.org.pk/m_policy/2025/MPS-Oct-2025-Eng.pdf
+2025-12-15,10.5,-50,https://www.sbp.org.pk/m_policy/2025/MPS-DEC-2025-Eng.pdf; brecorder.com/news/40397268
+2026-01-26,10.5,0,https://www.brecorder.com/news/40403801
+2026-03-09,10.5,0,https://pakistanchronicle.com/sbp-policy-rate-at-10-5pc-history-cut-proposals-2026/
+2026-04-27,11.5,100,https://www.brecorder.com/news/40418213/policy-rate-mpc-meets-today-amid-geopolitical-uncertainty
+2026-06-15,11.5,0,https://tribune.com.pk/story/2613274/sbp-keeps-policy-rate-unchanged-at-115
+2026-06-15,11.5,0,duplicate-guard-removed
+2026-07-27,11.5,0,https://www.momentumpakistan.com/blog/breaking-sbp-keeps-rate-unchanged-at-115-to-start-fy27-second-consecutive-hold-2026-07-27-16-31-54-nqetatkdhn-71057

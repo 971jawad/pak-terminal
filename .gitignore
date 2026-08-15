@@ -1,0 +1,12 @@
+# rebuilt in CI from data/raw/
+data/vendor/*.parquet
+# intermediate build outputs (docs/index.html is the published copy, tracked)
+terminal/pak_terminal.html
+terminal/bundle.json
+reports/_build/
+# python
+*.pyc
+__pycache__/
+.venv/
+.DS_Store
+excalidraw.log

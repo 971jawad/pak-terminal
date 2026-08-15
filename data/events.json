@@ -1,0 +1,632 @@
+{
+  "events": [
+    {
+      "date": "2019-07-03",
+      "type": "imf_milestone",
+      "title": "IMF Executive Board approves US$6bn 39-month EFF for Pakistan",
+      "sectors": [
+        "Commercial Banks",
+        "Oil & Gas Marketing",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.2,
+      "source": "IMF Press Release No. 19/264 (imf.org)",
+      "confidence": "high"
+    },
+    {
+      "date": "2019-06-11",
+      "type": "budget",
+      "title": "FY2019-20 federal budget (IMF-aligned austerity, higher taxes)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Commercial Banks",
+        "Fertilizer"
+      ],
+      "expected_sign": -0.3,
+      "source": "Wikipedia 2019-20 Pakistan federal budget; Dawn",
+      "confidence": "high"
+    },
+    {
+      "date": "2019-11-05",
+      "type": "policy",
+      "title": "Cabinet approves National Electric Vehicle Policy (2/3-wheelers & HCVs)",
+      "sectors": [
+        "Automobile Assembler",
+        "Automobile Parts & Accessories"
+      ],
+      "expected_sign": 0.3,
+      "source": "Ministry of Climate Change / press reports",
+      "confidence": "low"
+    },
+    {
+      "date": "2020-03-16",
+      "type": "external_shock",
+      "title": "COVID-19 market crash: KSE-100 plunges, trading halts",
+      "sectors": [
+        "Commercial Banks",
+        "Oil & Gas Marketing",
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.8,
+      "source": "PSX / Dawn / Reuters (Mar 2020)",
+      "confidence": "high"
+    },
+    {
+      "date": "2020-03-24",
+      "type": "rate_decision",
+      "title": "SBP emergency cut -150bps to 11% (COVID)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.5,
+      "source": "SBP Monetary Policy Statement Mar 2020 (sbp.org.pk)",
+      "confidence": "high"
+    },
+    {
+      "date": "2020-04-03",
+      "type": "policy",
+      "title": "PM construction-sector incentive package (fixed tax, amnesty)",
+      "sectors": [
+        "Cement",
+        "Engineering"
+      ],
+      "expected_sign": 0.5,
+      "source": "Dawn / Business Recorder (Apr 2020)",
+      "confidence": "medium"
+    },
+    {
+      "date": "2020-04-16",
+      "type": "rate_decision",
+      "title": "SBP cut -200bps to 9% (largest COVID cut)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.5,
+      "source": "SBP Monetary Policy Statement Apr 2020",
+      "confidence": "high"
+    },
+    {
+      "date": "2020-06-12",
+      "type": "budget",
+      "title": "FY2020-21 federal budget (COVID relief, no new heavy taxes)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Commercial Banks"
+      ],
+      "expected_sign": 0.1,
+      "source": "Wikipedia 2020-21 Pakistan federal budget",
+      "confidence": "high"
+    },
+    {
+      "date": "2020-06-25",
+      "type": "rate_decision",
+      "title": "SBP cut -100bps to 7% (easing cycle trough)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": 0.4,
+      "source": "SBP Monetary Policy Statement Jun 2020",
+      "confidence": "high"
+    },
+    {
+      "date": "2020-10-12",
+      "type": "policy",
+      "title": "Mera Pakistan Mera Ghar low-cost housing finance scheme launched",
+      "sectors": [
+        "Cement",
+        "Commercial Banks",
+        "Engineering"
+      ],
+      "expected_sign": 0.4,
+      "source": "SBP / Govt of Pakistan press (Oct 2020)",
+      "confidence": "medium"
+    },
+    {
+      "date": "2021-06-11",
+      "type": "budget",
+      "title": "FY2021-22 federal budget (growth-oriented, auto duty cuts)",
+      "sectors": [
+        "Automobile Assembler",
+        "Cement",
+        "Commercial Banks"
+      ],
+      "expected_sign": 0.2,
+      "source": "Wikipedia 2021-22 Pakistan federal budget",
+      "confidence": "high"
+    },
+    {
+      "date": "2021-07-01",
+      "type": "policy",
+      "title": "Auto Industry Development & Export Policy (AIDEP 2021-26) duty reductions",
+      "sectors": [
+        "Automobile Assembler",
+        "Automobile Parts & Accessories"
+      ],
+      "expected_sign": 0.3,
+      "source": "Engineering Development Board / press reports",
+      "confidence": "low"
+    },
+    {
+      "date": "2021-09-20",
+      "type": "rate_decision",
+      "title": "SBP begins tightening +25bps to 7.25%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.2,
+      "source": "SBP Monetary Policy Statement Sep 2021",
+      "confidence": "high"
+    },
+    {
+      "date": "2021-11-19",
+      "type": "rate_decision",
+      "title": "SBP hikes +150bps to 8.75%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.4,
+      "source": "SBP Monetary Policy Statement Nov 2021",
+      "confidence": "high"
+    },
+    {
+      "date": "2021-12-14",
+      "type": "rate_decision",
+      "title": "SBP hikes +100bps to 9.75%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.3,
+      "source": "SBP Monetary Policy Statement Dec 2021",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-02-24",
+      "type": "external_shock",
+      "title": "Russia-Ukraine invasion; global oil prices surge",
+      "sectors": [
+        "Oil & Gas Exploration"
+      ],
+      "expected_sign": 0.3,
+      "source": "Reuters / global markets (Feb 2022)",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-03-08",
+      "type": "commodity",
+      "title": "Brent crude spikes near US$139 (import-cost & circular-debt shock)",
+      "sectors": [
+        "Oil & Gas Marketing",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.4,
+      "source": "Reuters / ICE Brent (Mar 8 2022)",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-04-07",
+      "type": "rate_decision",
+      "title": "SBP emergency hike +250bps to 12.25%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.5,
+      "source": "SBP emergency MPC Apr 7 2022 (sbp.org.pk)",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-04-10",
+      "type": "political",
+      "title": "PM Imran Khan ousted via no-confidence vote",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler"
+      ],
+      "expected_sign": -0.3,
+      "source": "Wikipedia No-confidence motion against Imran Khan; Reuters",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-05-23",
+      "type": "rate_decision",
+      "title": "SBP hikes +150bps to 13.75%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.4,
+      "source": "SBP Monetary Policy Statement May 2022",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-06-10",
+      "type": "budget",
+      "title": "FY2022-23 federal budget (fiscal tightening for IMF)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Commercial Banks",
+        "Fertilizer"
+      ],
+      "expected_sign": -0.3,
+      "source": "Wikipedia 2022-23 Pakistan federal budget",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-06-24",
+      "type": "policy",
+      "title": "One-time 10% super tax on large-scale industries announced",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Fertilizer",
+        "Oil & Gas Exploration",
+        "Automobile Assembler"
+      ],
+      "expected_sign": -0.6,
+      "source": "Business Recorder / The News (Jun 24 2022)",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-07-07",
+      "type": "rate_decision",
+      "title": "SBP hikes +125bps to 15%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.4,
+      "source": "SBP Monetary Policy Statement Jul 2022",
+      "confidence": "high"
+    },
+    {
+      "date": "2022-11-25",
+      "type": "rate_decision",
+      "title": "SBP hikes +100bps to 16%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.3,
+      "source": "SBP Monetary Policy Statement Nov 25 2022",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-01-23",
+      "type": "rate_decision",
+      "title": "SBP hikes +100bps to 17%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.3,
+      "source": "SBP Monetary Policy Statement Jan 23 2023",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-01-26",
+      "type": "devaluation",
+      "title": "PKR free-float: record ~9.6% one-day drop after currency cap removed",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.5,
+      "source": "CNN / The Wire / Business Recorder (Jan 26 2023)",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-03-02",
+      "type": "rate_decision",
+      "title": "SBP hikes +300bps to 20% (largest single hike)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.6,
+      "source": "SBP MPC Mar 2 2023; Business Standard",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-04-04",
+      "type": "rate_decision",
+      "title": "SBP hikes +100bps to 21%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.3,
+      "source": "SBP Monetary Policy Statement Apr 2023",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-06-26",
+      "type": "rate_decision",
+      "title": "SBP emergency hike +100bps to peak 22%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": -0.4,
+      "source": "SBP emergency MPC Jun 2023 (sbp.org.pk)",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-06-25",
+      "type": "budget",
+      "title": "FY2023-24 budget passed (revised to secure IMF SBA)",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler"
+      ],
+      "expected_sign": -0.2,
+      "source": "Wikipedia 2023-24 Pakistan federal budget",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-06-30",
+      "type": "imf_milestone",
+      "title": "IMF staff-level agreement on US$3bn Stand-By Arrangement (default averted)",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Oil & Gas Exploration",
+        "Automobile Assembler"
+      ],
+      "expected_sign": 0.7,
+      "source": "IMF Press Release No. 23/251 (imf.org)",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-07-12",
+      "type": "imf_milestone",
+      "title": "IMF Executive Board approves US$3bn SBA",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Oil & Gas Marketing"
+      ],
+      "expected_sign": 0.4,
+      "source": "IMF Press Release No. 23/261 (imf.org)",
+      "confidence": "high"
+    },
+    {
+      "date": "2023-05-09",
+      "type": "political",
+      "title": "Imran Khan arrest triggers nationwide riots and unrest",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler"
+      ],
+      "expected_sign": -0.5,
+      "source": "Wikipedia 2022-24 Pakistani political crisis; Reuters",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-02-08",
+      "type": "political",
+      "title": "General election; inconclusive/hung result and uncertainty",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler"
+      ],
+      "expected_sign": -0.3,
+      "source": "Journal of Democracy / Reuters (Feb 8 2024)",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-06-10",
+      "type": "rate_decision",
+      "title": "SBP first cut in 4 years -150bps to 20.5%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.5,
+      "source": "Dawn / Business Recorder (Jun 10 2024)",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-06-12",
+      "type": "budget",
+      "title": "FY2024-25 federal budget (heavy taxation for IMF EFF)",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.4,
+      "source": "Wikipedia 2024-25 Pakistan federal budget",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-07-12",
+      "type": "imf_milestone",
+      "title": "IMF staff-level agreement on 37-month US$7bn EFF",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Oil & Gas Exploration"
+      ],
+      "expected_sign": 0.3,
+      "source": "IMF Press Release No. 24/273 (imf.org)",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-07-29",
+      "type": "rate_decision",
+      "title": "SBP cut -100bps to 19.5%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": 0.4,
+      "source": "SBP Monetary Policy Statement Jul 29 2024",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-09-12",
+      "type": "rate_decision",
+      "title": "SBP cut -200bps to 17.5%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.5,
+      "source": "Business Recorder (Sep 12 2024)",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-09-25",
+      "type": "imf_milestone",
+      "title": "IMF Executive Board approves US$7bn 37-month EFF",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Oil & Gas Marketing"
+      ],
+      "expected_sign": 0.4,
+      "source": "IMF Press Release No. 24/343 (imf.org)",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-11-04",
+      "type": "rate_decision",
+      "title": "SBP cut -250bps to 15% (largest cut of cycle)",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.6,
+      "source": "SBP Monetary Policy Statement Nov 2024",
+      "confidence": "high"
+    },
+    {
+      "date": "2024-12-16",
+      "type": "rate_decision",
+      "title": "SBP cut -200bps to 13%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": 0.5,
+      "source": "Business Recorder (Dec 16 2024)",
+      "confidence": "high"
+    },
+    {
+      "date": "2025-01-27",
+      "type": "rate_decision",
+      "title": "SBP cut -100bps to 12%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": 0.4,
+      "source": "SBP Monetary Policy Statement Jan 2025",
+      "confidence": "high"
+    },
+    {
+      "date": "2025-05-05",
+      "type": "rate_decision",
+      "title": "SBP cut -100bps to 11%",
+      "sectors": [
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite",
+        "Power Generation & Distribution"
+      ],
+      "expected_sign": 0.4,
+      "source": "SBP Monetary Policy Statement May 2025",
+      "confidence": "medium"
+    },
+    {
+      "date": "2025-05-07",
+      "type": "external_shock",
+      "title": "India-Pakistan military escalation; PSX sells off sharply",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler",
+        "Oil & Gas Exploration"
+      ],
+      "expected_sign": -0.6,
+      "source": "Reuters / PSX (May 2025)",
+      "confidence": "medium"
+    },
+    {
+      "date": "2025-05-09",
+      "type": "imf_milestone",
+      "title": "IMF Board completes first EFF review and approves RSF arrangement",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Oil & Gas Marketing"
+      ],
+      "expected_sign": 0.3,
+      "source": "IMF Press Release No. 25/137 (imf.org)",
+      "confidence": "high"
+    },
+    {
+      "date": "2025-06-10",
+      "type": "budget",
+      "title": "FY2025-26 federal budget",
+      "sectors": [
+        "Commercial Banks",
+        "Cement",
+        "Automobile Assembler",
+        "Textile Composite"
+      ],
+      "expected_sign": -0.2,
+      "source": "Wikipedia 2025-26 Pakistan federal budget; Dawn",
+      "confidence": "high"
+    }
+  ]
+}

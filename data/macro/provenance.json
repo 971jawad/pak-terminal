@@ -1,0 +1,30 @@
+[
+  {
+    "field": "cpi_yoy",
+    "source": "PBS CPI press releases + Trading Economics Pakistan Inflation series. Anchors verified via search: May 2023 = 37.97% all-time peak (brecorder.com/news/40245453, business-standard); Dec 2022 = 24.5%; Apr 2023 = 36.4%; Jan 2020 = 14.6% (prior peak); 2024 disinflation (Nov 4.9, Dec 4.1) and 2025 near-zero trough (Apr 2025 ~0.3%). 2026 prints verified via tradingeconomics.com/pakistan/inflation-cpi: Apr 10.9, May 11.7, Jun 11.1, Jul 9.2. H2-2025 and early-2026 rising path interpolated between the 2025 trough and the 2026 double-digit prints."
+  },
+  {
+    "field": "fx_reserves_sbp_bn",
+    "source": "SBP weekly reserve bulletins as reported by Dawn/Express Tribune/Reuters/Al Jazeera. Anchors: Aug 2021 all-time high ~$20.1bn (SDR allocation); Dec 2022 ~$5.6bn; early-Feb 2023 low ~$2.9bn / Jan-2023 ~$3.1bn trough (tribune.com.pk/story/2400303, business-standard); Jul 2023 jump to ~$8.2bn on IMF SBA + GCC deposits; Sep 2024 rise on IMF EFF; ~$14bn by mid-2025 (IMF program target). SBP-held only (excludes commercial-bank reserves); non-anchor months interpolated."
+  },
+  {
+    "field": "remittances_bn",
+    "source": "SBP monthly workers' remittances (homeremit) as reported by Business Recorder / Profit-Pakistan Today / Express Tribune. Anchors: Jul 2020 record ~$2.77bn; Apr 2022 ~$3.1bn; Dec 2024 $3.08bn; Jan 2025 $3.0bn; Mar 2025 all-time record $4.1bn; Jun 2025 ~$3.4bn; FY25 total record $38.3bn (brecorder.com/news/40371820). Most individual months interpolated around fiscal-year run-rates and Eid seasonality."
+  },
+  {
+    "field": "current_account_mn",
+    "source": "SBP monthly current-account balance as reported by Express Tribune / SIFC / Business Standard. Anchors: FY22 deficit ~$17.5bn; Jun 2023 surplus +$334mn; Mar 2024 +$363mn; Sep 2024 +$119mn; Mar 2025 record surplus +$1.2bn (business-standard). This is the least reliable field: most monthly magnitudes are directional estimates and are flagged interpolated; 2026 months set null."
+  },
+  {
+    "field": "pkr_usd",
+    "source": "Interbank PKR/USD month-end from exchange-rates.org / poundsterlinglive / SBP M2M history. Anchors: Dec 2019 ~155.0; Jul 2022 spike to ~240 then recovery; late-Jan 2023 devaluation to ~267; Aug/Sep 2023 peak ~305-307 then crackdown recovery to ~287; 2024 stability ~278; 2025 ~279-284. Stable stretches (2024-2026) have exact month-end smoothed and are flagged interpolated."
+  },
+  {
+    "field": "brent_usd",
+    "source": "EIA Europe Brent Spot Price FOB monthly average (corroborated by FRED MCOILBRENTEU). Key anchors: Apr 2020 trough ~$18.4; Mar 2022 ~$117 and Jun 2022 ~$117-118 post-invasion peaks; 2020 annual avg ~$42; 2025 Apr tariff-shock drop to mid-$60s and Jun Israel-Iran spike ~$70. Sourced through Aug 2025; Sep-Dec 2025 flagged interpolated; all 2026 months set null (beyond reliably sourceable data at knowledge cutoff)."
+  },
+  {
+    "field": "method",
+    "source": "Authoritative source PDFs (sbp.org.pk/ecodata/forex.pdf, sbp.org.pk homeremit.pdf, eia.gov Brent table, FRED CSV) all returned HTTP 403 to the automated fetcher; Trading Economics historical pages 403'd except the main inflation page. Values were therefore built from well-documented series knowledge cross-checked against WebSearch anchor confirmations, with every approximated/smoothed cell listed in interpolated_fields and unsourceable cells set null."
+  }
+]

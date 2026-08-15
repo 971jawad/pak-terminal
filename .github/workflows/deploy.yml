@@ -1,0 +1,39 @@
+name: Daily site build & deploy
+
+on:
+  schedule:
+    # 13:00 UTC = 18:00 PKT, ~2.5h after PSX close, Mon-Fri
+    - cron: "0 13 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # commit rebuilt docs/ + new raw data (Pages serves main:/docs)
+
+concurrency:
+  group: daily-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install --quiet pandas pyarrow numpy scikit-learn requests
+      - name: Fetch latest PSX data + rebuild terminal
+        run: python scripts/build_site.py
+      - name: Commit refreshed site
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html data/raw data/holidays.json data/strategy_result.json
+          if git diff --cached --quiet; then
+            echo "Nothing new (market likely closed today)."
+          else
+            git commit -m "Daily rebuild $(date -u +%Y-%m-%d)"
+            git push
+          fi
