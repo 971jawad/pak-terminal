@@ -610,6 +610,23 @@ PANELS.Strategy=()=>{
   } else lc.append($('div',{class:'muted'},'no live picks'));
   lc.append($('div',{class:'note'},'⚠️ This is ONE partial period (~2 weeks of a 1–3 month hold), n=1 — as much luck as skill. It is the GOOD tail of a fat-tailed bet; the −30% drawdown periods look like this in reverse. Some of the gain is the market rebounding (beta), not selection. Do not extrapolate from one fortnight.'));
   w.append(lc);
+  // this-month live comparison across ALL pick strategies
+  const pl=S.predictor_live||{}, mk=S.market_live;
+  const mc=$('div',{class:'card',style:'margin-top:16px'});
+  mc.append($('h3',{},'This month — live, all strategies ',$('span',{class:'tag warn'},`entry ${lv.entry_date||'—'} → ${lv.as_of||S.as_of||''}`)));
+  const rows=[['Market (buy&hold / timing baseline)',mk],['Gated momentum top-5 (locked-in)',lv.basket_ret]];
+  ['1','2','3'].forEach(H=>{const d=(pl.by_horizon||{})[H];if(d)rows.push([`ML futures predictor ${H}m`,d.basket_ret]);});
+  const maxv=Math.max(...rows.map(([,v])=>Math.abs(v||0)),0.05);
+  rows.forEach(([lab,v])=>mc.append($('div',{style:'display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;margin:4px 0'},
+    $('div',{style:lab.includes('Market')?'color:var(--muted)':'font-weight:600'},lab),
+    barRow(v||0,maxv,(v||0)>0?'var(--up)':'var(--down)'),
+    $('div',{class:'num '+cls(v)},pct(v,1)))));
+  // ML predictor picks per horizon (tickers)
+  ['1','2','3'].forEach(H=>{const d=(pl.by_horizon||{})[H];if(!d||!d.legs.length)return;
+    mc.append($('div',{class:'chipwrap',style:'margin-top:8px'},$('span',{class:'mono muted',style:'font-size:11px;align-self:center'},`ML ${H}m: `),
+      ...d.legs.map(l=>$('span',{class:'pill',style:`background:var(--panel2);color:${(l.ret||0)>=0?'var(--up)':'var(--down)'}`},`${l.symbol} `,$('span',{class:'muted'},l.entry),` ${l.ret==null?'':pct(l.ret,0)}`))));});
+  mc.append($('div',{class:'note'},'ONE partial period (n=1, ~2.5 weeks), and the market rebounded — every strategy is riding beta + the good tail (moonshots showed up). The pick strategies beating the market here is the mirror image of the months they lose. Do not extrapolate.'));
+  w.append(mc);
   w.append($('div',{class:'card',style:'margin-top:16px;border-left:3px solid var(--down)'},
     $('h3',{},'Do not fool yourself'),
     $('div',{class:'detail',style:'grid-template-columns:1fr;font-size:12.5px;gap:8px'},

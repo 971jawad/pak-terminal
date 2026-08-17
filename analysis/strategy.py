@@ -106,6 +106,41 @@ def backtest(min_adv: float = F.MIN_ADV) -> dict:
     return out
 
 
+def predictor_live(entry_ym, min_adv: float = F.MIN_ADV) -> dict:
+    """The ML futures-predictor's top-5 per horizon, made at end of `entry_ym`,
+    marked to the latest close — so the OTHER strategies' this-month performance
+    is visible alongside the gated-momentum one."""
+    panel = F.feature_panel(min_adv)
+    p = panel[panel.eligible].copy()
+    entry_p = pd.Period(entry_ym, "M")
+    df = data.load_prices(); last = df.date.max()
+    if p[p.ym == entry_p].empty:
+        return {"by_horizon": {}}
+    entry_date = p[p.ym == entry_p].date.max()
+    cuml = df.set_index(["symbol", "date"])["cumlog"]
+    out = {}
+    for H in F.HORIZONS:
+        train = p[p.ym <= (entry_p - H)].dropna(subset=[f"fwd_{H}"])
+        cur = p[p.ym == entry_p]
+        if len(train) < 200 or len(cur) < F.TOPK:
+            out[str(H)] = {"legs": [], "basket_ret": None}
+            continue
+        m = F._reg(); m.fit(train[F.FEATURES].to_numpy(np.float32), train[f"fwd_{H}"].to_numpy())
+        cur = cur.assign(score=m.predict(cur[F.FEATURES].to_numpy(np.float32)))
+        legs = []
+        for _, r in cur.nlargest(F.TOPK, "score").iterrows():
+            try:
+                ret = float(np.expm1(cuml.loc[(r.symbol, last)] - cuml.loc[(r.symbol, entry_date)]))
+            except KeyError:
+                ret = None
+            legs.append({"symbol": r.symbol, "sector": r.sector_name,
+                         "entry": round(float(r.close), 2),
+                         "ret": None if ret is None else round(ret, 3)})
+        rr = [l["ret"] for l in legs if l["ret"] is not None]
+        out[str(H)] = {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None}
+    return {"entry_date": str(entry_date.date()), "as_of": str(last.date()), "by_horizon": out}
+
+
 def build_result(min_adv: float = F.MIN_ADV) -> dict:
     panel = F.feature_panel(min_adv)
     el = panel[panel.eligible]
@@ -114,8 +149,16 @@ def build_result(min_adv: float = F.MIN_ADV) -> dict:
     completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
     last_full = completed[-1] if completed else sorted(el.ym.unique())[-1]
     live = interim_performance(last_full, min_adv)
+    # market baseline over the same live window (= buy&hold and, since RISK-ON, the timing strategies too)
+    mkt = data.market_index(min_adv); loglvl = np.log1p(mkt).cumsum()
+    mkt_since = None
+    if live.get("entry_date"):
+        ed = pd.Timestamp(live["entry_date"])
+        if ed in loglvl.index:
+            mkt_since = round(float(np.expm1(loglvl.iloc[-1] - loglvl.loc[ed])), 4)
     return {"regime": timing_regime(min_adv), "backtest": backtest(min_adv),
-            "live": live, "as_of": str(data.latest_date().date())}
+            "live": live, "predictor_live": predictor_live(last_full, min_adv),
+            "market_live": mkt_since, "as_of": str(data.latest_date().date())}
 
 
 if __name__ == "__main__":
