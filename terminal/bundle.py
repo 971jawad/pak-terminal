@@ -12,7 +12,7 @@ import pandas as pd
 
 from pakterm import config, data
 from analysis import regime, connections, events, sentiment, surges, mood, predictor, flows
-from analysis import analysis_filter
+from analysis import analysis_filter, surger
 
 
 def _series_xy(s: pd.Series, r=4):
@@ -173,6 +173,7 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "flows": flows.summary(),
         "strategy": strat,
         "analysis_filter": analysis_filter.filter_result(min_adv),  # SEPARATE overlay
+        "surger": surger.live_result(min_adv),                      # SEPARATE predictor
     }
     return bundle
 

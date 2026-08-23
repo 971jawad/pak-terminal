@@ -963,9 +963,60 @@ PANELS.Filter=()=>{
   return w;
 };
 
+PANELS.Surger=()=>{
+  const w=$('div',{});const S=D.surger||{};
+  w.append($('h2',{class:'sect-title'},'Surger Predictor'),
+    $('p',{class:'lead'},'Forward 6-month surger picks from a rule + ML + AI ensemble on the FULL liquid universe. Futures-eligibility is a SEPARATE overlay (⚡ = leverageable via single-stock futures) — toggle it below. Returns mark-to-market and update daily. A wide-basket harvest: it catches ~30% of surgers out-of-sample; it does not snipe individual mega-surgers.'));
+  const mc=$('div',{class:'card'});
+  mc.append($('h3',{},'Live prediction ',$('span',{class:'tag warn'},`entry ${S.entry_month||'—'} · forward ${S.forward_window||''}`)));
+  mc.append($('div',{class:'mono muted',style:'font-size:12px;margin-bottom:10px'},`made at ${S.entry_date||'—'} · marked to ${S.as_of||''} (${S.days_held||0}d) · universe ${S.universe_n||0} names (${S.n_eligible||0} futures-eligible)`));
+  const kwrap=$('div',{class:'grid cols2'});
+  kwrap.append($('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cls(S.basket_ret)},pct(S.basket_ret,1)),$('span',{class:'l'},'basket so far · all picks'))),
+    $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cls(S.basket_ret_eligible)},pct(S.basket_ret_eligible,1)),$('span',{class:'l'},'basket so far · ⚡ futures-eligible only'))));
+  mc.append(kwrap);
+  w.append(mc);
+  const pc=$('div',{class:'card',style:'margin-top:16px'});
+  const hdr=$('div',{style:'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px'});
+  hdr.append($('h3',{style:'margin:0'},'Picks — what should surge'));
+  let eligOnly=false;
+  const btn=$('button',{style:'font-family:var(--mono);font-size:12px;padding:4px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--panel2);color:var(--ink);cursor:pointer'},'⚡ futures-eligible only');
+  hdr.append(btn);pc.append(hdr);
+  const t=$('table',{style:'margin-top:10px'});
+  t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector','Entry','Now','Return','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
+  const tb=$('tbody');const nonElig=[];
+  (S.picks||[]).forEach(p=>{
+    const tr=$('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+      $('td',{style:'text-align:center'},p.futures_eligible?'⚡':''),
+      $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+      $('td',{class:'num muted'},p.entry_close),
+      $('td',{class:'num'},p.last_close==null?'—':p.last_close),
+      $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)),
+      $('td',{class:'num accent'},p.ens),
+      $('td',{class:'mono muted',style:'font-size:10px'},`${p.rule_pct}/${p.ml_pct}/${p.ai_pct}`));
+    if(!p.futures_eligible)nonElig.push(tr);
+    tb.append(tr);
+  });
+  t.append(tb);pc.append($('div',{class:'tablewrap'},t));
+  btn.onclick=()=>{eligOnly=!eligOnly;btn.textContent=eligOnly?'show all names':'⚡ futures-eligible only';
+    nonElig.forEach(r=>{r.style.display=eligOnly?'none':'';});};
+  pc.append($('div',{class:'note'},'Component columns show each model’s percentile rank (rule / ML / AI). ⚡ = futures-eligible (leverageable); the toggle filters to that subset. Entry = last completed month-end; returns update daily and the window rolls forward each month.'));
+  w.append(pc);
+  const sc=S.scorecard||{};const cc=$('div',{class:'card',style:'margin-top:16px'});
+  cc.append($('h3',{},'Honest OOS scorecard ',$('span',{class:'tag ok'},'walk-forward · held-out half')));
+  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  cc.append($('div',{class:'grid cols2'},
+    kpi(sc.precision_oos!=null?(sc.precision_oos*100).toFixed(0)+'%':'—','precision (base '+((sc.base_rate||0)*100).toFixed(0)+'%)','accent'),
+    kpi(sc.catch_rate_oos!=null?(sc.catch_rate_oos*100).toFixed(0)+'%':'—','catch-rate of all surgers'),
+    kpi(sc.cumulative_oos||'—','cumulative (test half)','accent'),
+    kpi(sc.maxdd_oos!=null?(sc.maxdd_oos*100).toFixed(0)+'%':'—','max drawdown')));
+  cc.append($('div',{class:'note'},S.note||''));
+  w.append(cc);
+  return w;
+};
+
 /* ---------- shell ---------- */
 const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
-  ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
+  ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],['Surger',PANELS.Surger],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],
   ['Sentiment',PANELS.Sentiment],['Method',PANELS.Method]];
