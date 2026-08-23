@@ -912,9 +912,60 @@ PANELS.Futures=()=>{
   return w;
 };
 
+PANELS.Filter=()=>{
+  const w=$('div',{});const F=D.analysis_filter||{};
+  w.append($('h2',{class:'sect-title'},'Analysis Filter'),
+    $('p',{class:'lead'},'A SEPARATE investor-brain overlay that sits on top of the locked-in picks — it never changes them. It re-judges each pick through four lenses (extension / “chased”, regime-fit, overhang, valuation) and down-sizes the crash-prone names. Walk-forward, OOS-validated: it roughly halves max drawdown. Precision is NOT improvable mechanically on the data available — the verdict tags are a discretionary read, not an edge.'));
+  const rg=F.regime||{};
+  const rc=$('div',{class:'card'});
+  rc.append($('h3',{},'Regime read ',$('span',{class:'tag info'},'from CPI + policy-rate trend')));
+  rc.append($('div',{class:'mono',style:'font-size:14px;margin:6px 0'},'state: ',
+    $('b',{class:rg.sign>0?'up':rg.sign<0?'down':'accent'},(rg.label||'—').toUpperCase()),
+    rg.cpi_chg_3m!=null?`  ·  3-mo CPI change ${rg.cpi_chg_3m>0?'+':''}${rg.cpi_chg_3m}pp`:''));
+  rc.append($('div',{class:'muted',style:'font-size:12.5px'},'favours: '+(rg.favours||'—')));
+  w.append(rc);
+  const bt=F.backtest||{};
+  const bc=$('div',{class:'card',style:'margin-top:16px'});
+  bc.append($('h3',{},'What the overlay does to risk ',$('span',{class:'tag ok'},'walk-forward · OOS-validated')));
+  const t=$('table');t.append($('thead',{},$('tr',{},...['Horizon','Base maxDD','Filtered maxDD','Base Sharpe','Filt Sharpe','Base Calmar','Filt Calmar'].map(h=>$('th',{},h)))));
+  const tb=$('tbody');['1','2','3'].forEach(H=>{const s=bt[H];if(!s)return;
+    tb.append($('tr',{style:H==='3'?'background:var(--accent-soft)':''},$('td',{},H+'-month'),
+      $('td',{class:'num down'},pct(s.base_dd,0)),
+      $('td',{class:'num up'},pct(s.filt_dd,0)),
+      $('td',{class:'num muted'},fmt(s.base_sharpe,2)),
+      $('td',{class:'num'},fmt(s.filt_sharpe,2)),
+      $('td',{class:'num muted'},fmt(s.base_calmar,2)),
+      $('td',{class:'num'},fmt(s.filt_calmar,2))));});
+  t.append(tb);bc.append($('div',{class:'tablewrap'},t));
+  bc.append($('div',{class:'note'},'Same names — only the SIZING changes: extended/parabolic names are down-weighted and the shed weight sits in cash. Drawdown roughly halves at every horizon and held in both halves of the sample. You pay for it in CAGR; at 3-month it also lifts Sharpe & Calmar.'));
+  w.append(bc);
+  const pc=$('div',{class:'card',style:'margin-top:16px'});
+  pc.append($('h3',{},'Current picks — verdicts & filter sizing ',$('span',{class:'tag warn'},`entry ${F.entry_month||'—'}`)));
+  const tcol=v=>v==='regime-fit'?'up':(v==='clean'?'muted':'down');
+  if((F.picks||[]).length){
+    const t2=$('table');t2.append($('thead',{},$('tr',{},...['Symbol','Sector','Ext','Verdict','Base wt','Filter wt'].map(h=>$('th',{},h)))));
+    const b2=$('tbody');F.picks.forEach(p=>{
+      const tags=$('div',{class:'chipwrap'});(p.verdict||[]).forEach(v=>tags.append($('span',{class:'mchip',style:'color:var(--'+tcol(v)+')'},v)));
+      b2.append($('tr',{},
+        $('td',{},p.symbol),
+        $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+        $('td',{class:'num'},fmt(p.extension,1)),
+        $('td',{},tags),
+        $('td',{class:'num muted'},(p.base_weight*100).toFixed(0)+'%'),
+        $('td',{class:'num accent'},(p.filter_weight*100).toFixed(0)+'%')));});
+    t2.append(b2);pc.append($('div',{class:'tablewrap'},t2));
+    pc.append($('div',{class:'kpi',style:'margin-top:10px'},
+      $('span',{class:'v accent'},((F.invested_pct||0)*100).toFixed(0)+'%'),
+      $('span',{class:'l'},'invested under the overlay · rest in cash (T-bills)')));
+  } else pc.append($('div',{class:'muted'},'no picks'));
+  pc.append($('div',{class:'note'},F.note||''));
+  w.append(pc);
+  return w;
+};
+
 /* ---------- shell ---------- */
 const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
-  ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],
+  ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],
   ['Sentiment',PANELS.Sentiment],['Method',PANELS.Method]];
