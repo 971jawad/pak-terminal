@@ -975,48 +975,73 @@ PANELS.Surger=()=>{
     $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cls(S.basket_ret_eligible)},pct(S.basket_ret_eligible,1)),$('span',{class:'l'},'basket so far · ⚡ futures-eligible only'))));
   mc.append(kwrap);
   w.append(mc);
+  const pill='font-family:var(--mono);font-size:12px;padding:4px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--panel2);color:var(--ink);cursor:pointer';
+  const BM=S.by_method||{};
+  // per-method live basket comparison
+  const cmp=$('div',{class:'card',style:'margin-top:16px'});
+  cmp.append($('h3',{},'How each method is performing — live basket'));
+  const ct=$('table');ct.append($('thead',{},$('tr',{},...['Method','Basket · all','Basket · ⚡ eligible'].map(h=>$('th',{},h)))));
+  const ctb=$('tbody');
+  ['Ensemble','Rule','ML','AI'].forEach(m=>{const d=BM[m]||{};
+    ctb.append($('tr',{style:m==='Ensemble'?'background:var(--accent-soft)':''},
+      $('td',{},m),$('td',{class:'num '+cls(d.basket_ret)},pct(d.basket_ret,1)),
+      $('td',{class:'num '+cls(d.basket_ret_eligible)},pct(d.basket_ret_eligible,1))));});
+  ct.append(ctb);cmp.append($('div',{class:'tablewrap'},ct));
+  cmp.append($('div',{class:'note'},'Each model ranks the same universe independently; the ensemble rank-blends all three. They make different errors, so the blend is usually steadier than any single one.'));
+  w.append(cmp);
+  // picks by method — model selector + eligibility overlay toggle
   const pc=$('div',{class:'card',style:'margin-top:16px'});
-  const hdr=$('div',{style:'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px'});
-  hdr.append($('h3',{style:'margin:0'},'Picks — what should surge'));
-  let eligOnly=false;
-  const btn=$('button',{style:'font-family:var(--mono);font-size:12px;padding:4px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--panel2);color:var(--ink);cursor:pointer'},'⚡ futures-eligible only');
-  hdr.append(btn);pc.append(hdr);
-  const t=$('table',{style:'margin-top:10px'});
-  t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector','Entry','Now','Return','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
-  const tb=$('tbody');const nonElig=[];
-  (S.picks||[]).forEach(p=>{
-    const tr=$('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+  const hdr=$('div',{style:'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px'});
+  hdr.append($('h3',{style:'margin:0'},'Picks — every method'));
+  let curM='Ensemble',eligOnly=false;const mbtn={};
+  const sel=$('div',{class:'chipwrap'});
+  ['Ensemble','Rule','ML','AI'].forEach(m=>{const b=$('button',{style:pill},m);mbtn[m]=b;
+    b.onclick=()=>{curM=m;draw();};sel.append(b);});
+  const eb=$('button',{style:pill},'⚡ eligible only');
+  eb.onclick=()=>{eligOnly=!eligOnly;eb.textContent=eligOnly?'show all':'⚡ eligible only';draw();};
+  sel.append(eb);hdr.append(sel);pc.append(hdr);
+  const holder=$('div',{});pc.append(holder);
+  function draw(){
+    holder.innerHTML='';
+    Object.entries(mbtn).forEach(([m,b])=>{b.style.borderColor=m===curM?'var(--accent)':'var(--bd)';b.style.color=m===curM?'var(--accent)':'var(--ink)';});
+    const d=BM[curM]||{};let picks=(d.picks||[]);if(eligOnly)picks=picks.filter(p=>p.futures_eligible);
+    const t=$('table',{style:'margin-top:12px'});
+    t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector','Entry','Now','Return','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    picks.forEach((p,i)=>tb.append($('tr',{},$('td',{class:'num muted'},i+1),$('td',{},$('b',{},p.symbol)),
       $('td',{style:'text-align:center'},p.futures_eligible?'⚡':''),
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
       $('td',{class:'num muted'},p.entry_close),
       $('td',{class:'num'},p.last_close==null?'—':p.last_close),
       $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)),
       $('td',{class:'num accent'},p.ens),
-      $('td',{class:'mono muted',style:'font-size:10px'},`${p.rule_pct}/${p.ml_pct}/${p.ai_pct}`));
-    if(!p.futures_eligible)nonElig.push(tr);
-    tb.append(tr);
-  });
-  t.append(tb);pc.append($('div',{class:'tablewrap'},t));
-  btn.onclick=()=>{eligOnly=!eligOnly;btn.textContent=eligOnly?'show all names':'⚡ futures-eligible only';
-    nonElig.forEach(r=>{r.style.display=eligOnly?'none':'';});};
-  pc.append($('div',{class:'note'},'Component columns show each model’s percentile rank (rule / ML / AI). ⚡ = futures-eligible (leverageable); the toggle filters to that subset. Entry = last completed month-end; returns update daily and the window rolls forward each month.'));
+      $('td',{class:'mono muted',style:'font-size:10px'},`${p.rule_pct}/${p.ml_pct}/${p.ai_pct}`))));
+    t.append(tb);holder.append($('div',{class:'tablewrap'},t));
+    const br=eligOnly?d.basket_ret_eligible:d.basket_ret;
+    holder.append($('div',{class:'kpi',style:'margin-top:10px'},$('span',{class:'v '+cls(br)},pct(br,1)),
+      $('span',{class:'l'},`${curM} basket · ${eligOnly?'⚡ eligible only':'all picks'}`)));
+  }
+  draw();
+  pc.append($('div',{class:'note'},'Switch models with the chips. Columns: Ens = ensemble score; R/ML/AI = each model’s percentile rank for that name. ⚡ = futures-eligible; the toggle filters to that subset. Entry = last completed month-end; returns update daily, window rolls monthly.'));
   w.append(pc);
-  const sc=S.scorecard||{};const cc=$('div',{class:'card',style:'margin-top:16px'});
-  cc.append($('h3',{},'Honest OOS scorecard ',$('span',{class:'tag ok'},'walk-forward · held-out half')));
-  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
-  cc.append($('div',{class:'grid cols2'},
-    kpi(sc.precision_oos!=null?(sc.precision_oos*100).toFixed(0)+'%':'—','precision (base '+((sc.base_rate||0)*100).toFixed(0)+'%)','accent'),
-    kpi(sc.catch_rate_oos!=null?(sc.catch_rate_oos*100).toFixed(0)+'%':'—','catch-rate of all surgers'),
-    kpi(sc.cumulative_oos||'—','cumulative (test half)','accent'),
-    kpi(sc.maxdd_oos!=null?(sc.maxdd_oos*100).toFixed(0)+'%':'—','max drawdown')));
-  cc.append($('div',{class:'note'},S.note||''));
-  w.append(cc);
+  // full backtest — every method & combination
+  const bt=(S.backtest_methods||{}).K15||[];
+  const bc=$('div',{class:'card',style:'margin-top:16px'});
+  bc.append($('h3',{},'Backtest — every method & combination ',$('span',{class:'tag ok'},'walk-forward · OOS held-out half')));
+  const t2=$('table');t2.append($('thead',{},$('tr',{},...['Method','Precision','Catch %','Cumulative','Max DD'].map(h=>$('th',{},h)))));
+  const tb2=$('tbody');
+  bt.forEach(r=>tb2.append($('tr',{style:r.m==='Rule+ML+AI'?'background:var(--accent-soft)':''},
+    $('td',{},r.m),$('td',{class:'num'},r.prec+'%'),$('td',{class:'num'},r.catch+'%'),
+    $('td',{class:'num accent'},r.mult),$('td',{class:'num '+cls(r.dd)},(r.dd>0?'+':'')+r.dd+'%'))));
+  t2.append(tb2);bc.append($('div',{class:'tablewrap'},t2));
+  bc.append($('div',{class:'note'},'6-month hold, non-overlapping, gated, held-out second half of 2019–2026 (K=15 basket). Precision base rate ~7%, so ~27% is a 3–4× edge that survives out-of-sample. No single method dominates; the ensemble adds catch-rate. (Concentrated K=5 ensembles reach 4–6× in the test half but on tiny samples — high variance.) A WIDE-basket harvest, not a sniper.'));
+  w.append(bc);
   return w;
 };
 
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
-  ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],['Surger',PANELS.Surger],
+const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+  ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],
   ['Sentiment',PANELS.Sentiment],['Method',PANELS.Method]];

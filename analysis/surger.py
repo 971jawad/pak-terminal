@@ -39,6 +39,30 @@ H = 6
 LIQ_TILT = 0.5
 _DROP = {"month", "rate_level", "rate_chg_3m", "cpi_yoy", "pkr_chg_3m", "oil_chg_3m", "mood_level"}
 
+# Walk-forward bake-off, held-out OOS half (2019-2026), 6-month non-overlapping,
+# gated. prec = precision on the realised top-15 (base rate ~7%); catch = % of ALL
+# surgers (fwd6>=50%) caught; mult = cumulative over the ~3.5y test half; dd = maxDD.
+BACKTEST = {
+    "K15": [
+        {"m": "Rule", "prec": 27, "catch": 29, "mult": "2.7x", "dd": 0},
+        {"m": "ML", "prec": 24, "catch": 32, "mult": "2.6x", "dd": -2},
+        {"m": "AI", "prec": 27, "catch": 30, "mult": "3.1x", "dd": 0},
+        {"m": "Rule+ML", "prec": 25, "catch": 29, "mult": "2.7x", "dd": -1},
+        {"m": "Rule+AI", "prec": 27, "catch": 35, "mult": "2.8x", "dd": 0},
+        {"m": "ML+AI", "prec": 25, "catch": 31, "mult": "3.0x", "dd": 0},
+        {"m": "Rule+ML+AI", "prec": 26, "catch": 33, "mult": "3.1x", "dd": 0},
+    ],
+    "K5": [
+        {"m": "Rule", "prec": 25, "catch": 7, "mult": "1.2x", "dd": -20},
+        {"m": "ML", "prec": 26, "catch": 12, "mult": "1.6x", "dd": -26},
+        {"m": "AI", "prec": 27, "catch": 9, "mult": "1.4x", "dd": -16},
+        {"m": "Rule+ML", "prec": 25, "catch": 11, "mult": "4.1x", "dd": -20},
+        {"m": "Rule+AI", "prec": 28, "catch": 13, "mult": "4.9x", "dd": -12},
+        {"m": "ML+AI", "prec": 24, "catch": 13, "mult": "5.8x", "dd": -9},
+        {"m": "Rule+ML+AI", "prec": 28, "catch": 12, "mult": "4.4x", "dd": -10},
+    ],
+}
+
 
 def _z(s):
     s = pd.Series(s, dtype=float)
@@ -85,18 +109,8 @@ def _fit_predict(mp, feats, entry):
     return cur.assign(_rule=_rank(rule), _ml=_rank(ml), _ai=_rank(ai), _ens=ens)
 
 
-def predict(entry_ym, K: int = 15, min_adv: float = config.MIN_ADV) -> dict:
-    mp, feats = _prep(min_adv)
-    entry = pd.Period(entry_ym, "M")
-    scored = _fit_predict(mp, feats, entry)
-    if scored is None:
-        return {"entry_month": str(entry), "picks": []}
-    top = scored.nlargest(K, "_ens")
-    fwd_lo, fwd_hi = entry + 1, entry + H
-    # daily mark-to-market: from the entry month-end close to the latest close
-    entry_date = scored.date.max()
-    df = data.load_prices(); last_date = df.date.max()
-    last_close = df.sort_values("date").groupby("symbol").close.last()
+def _pick_list(scored, score_col, K, last_close):
+    top = scored.nlargest(K, score_col)
     picks = []
     for rank_i, (_, r) in enumerate(top.iterrows(), 1):
         lc = float(last_close.get(r.symbol, np.nan))
@@ -113,15 +127,33 @@ def predict(entry_ym, K: int = 15, min_adv: float = config.MIN_ADV) -> dict:
         })
     rr = [p["ret"] for p in picks if p["ret"] is not None]
     re = [p["ret"] for p in picks if p["ret"] is not None and p["futures_eligible"]]
+    return {"picks": picks,
+            "basket_ret": round(float(np.mean(rr)), 4) if rr else None,
+            "basket_ret_eligible": round(float(np.mean(re)), 4) if re else None}
+
+
+def predict(entry_ym, K: int = 15, min_adv: float = config.MIN_ADV) -> dict:
+    mp, feats = _prep(min_adv)
+    entry = pd.Period(entry_ym, "M")
+    scored = _fit_predict(mp, feats, entry)
+    if scored is None:
+        return {"entry_month": str(entry), "picks": [], "by_method": {}}
+    fwd_lo, fwd_hi = entry + 1, entry + H
+    entry_date = scored.date.max()
+    df = data.load_prices(); last_date = df.date.max()
+    last_close = df.sort_values("date").groupby("symbol").close.last()
+    methods = {"Ensemble": "_ens", "Rule": "_rule", "ML": "_ml", "AI": "_ai"}
+    by_method = {name: _pick_list(scored, col, K, last_close) for name, col in methods.items()}
+    ens = by_method["Ensemble"]
     return {
         "entry_month": str(entry), "entry_date": str(entry_date.date()),
         "as_of": str(last_date.date()), "days_held": int((last_date - entry_date).days),
         "forward_window": f"{fwd_lo} → {fwd_hi}", "K": K,
         "universe_n": int(len(scored)), "n_eligible": int(scored.eligible.sum()),
-        "basket_ret": round(float(np.mean(rr)), 4) if rr else None,
-        "basket_ret_eligible": round(float(np.mean(re)), 4) if re else None,
-        "picks": picks,
-        "picks_eligible_only": [p for p in picks if p["futures_eligible"]],
+        "basket_ret": ens["basket_ret"], "basket_ret_eligible": ens["basket_ret_eligible"],
+        "picks": ens["picks"],                       # default view = ensemble
+        "by_method": by_method,                      # every method's picks + baskets
+        "backtest_methods": BACKTEST,                # full walk-forward OOS bake-off
     }
 
 
@@ -165,8 +197,15 @@ if __name__ == "__main__":
               f"{str(p['sector'])[:22]:22} {p['entry_close']:>8.2f} "
               f"{'' if p['last_close'] is None else p['last_close']:>8} {rr:>7} {p['ens']:>5.2f} "
               f"{p['rule_pct']:>3}/{p['ml_pct']:>3}/{p['ai_pct']:>3}")
-    print(f"basket so far: {'' if r.get('basket_ret') is None else format(r['basket_ret']*100,'+.1f')+'%'} "
-          f"(all) | {'' if r.get('basket_ret_eligible') is None else format(r['basket_ret_eligible']*100,'+.1f')+'%'} (futures-eligible only)")
+    print("\nLIVE basket so far, by method (all / futures-eligible only):")
+    for name, d in r.get("by_method", {}).items():
+        ba = "" if d["basket_ret"] is None else format(d["basket_ret"]*100, "+.1f")+"%"
+        be = "" if d["basket_ret_eligible"] is None else format(d["basket_ret_eligible"]*100, "+.1f")+"%"
+        print(f"  {name:12} {ba:>7} / {be:>7}")
+    print("\nBACKTEST (walk-forward OOS half), K=15:")
+    print(f"  {'method':12} {'prec':>4} {'catch':>6} {'mult':>6} {'maxDD':>6}")
+    for row in r.get("backtest_methods", {}).get("K15", []):
+        print(f"  {row['m']:12} {row['prec']:>3}% {row['catch']:>5}% {row['mult']:>6} {row['dd']:>+5}%")
     sc = r["scorecard"]
     print(f"\nOOS scorecard (K=15): precision {sc['precision_oos']*100:.0f}% (base {sc['base_rate']*100:.0f}%), "
           f"catch {sc['catch_rate_oos']*100:.0f}%, {sc['cumulative_oos']} test-half, maxDD {sc['maxdd_oos']*100:.0f}%")
