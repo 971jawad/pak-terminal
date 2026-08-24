@@ -1006,14 +1006,16 @@ PANELS.Surger=()=>{
     Object.entries(mbtn).forEach(([m,b])=>{b.style.borderColor=m===curM?'var(--accent)':'var(--bd)';b.style.color=m===curM?'var(--accent)':'var(--ink)';});
     const d=BM[curM]||{};let picks=(d.picks||[]);if(eligOnly)picks=picks.filter(p=>p.futures_eligible);
     const t=$('table',{style:'margin-top:12px'});
-    t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector','Entry','Now','Return','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
+    t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector','Entry','Now','Return','Earnings','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
     const tb=$('tbody');
+    const ecls=e=>e==='earnings-backed'?'up':e==='price-ahead'?'down':'muted';
     picks.forEach((p,i)=>tb.append($('tr',{},$('td',{class:'num muted'},i+1),$('td',{},$('b',{},p.symbol)),
       $('td',{style:'text-align:center'},p.futures_eligible?'⚡':''),
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
       $('td',{class:'num muted'},p.entry_close),
       $('td',{class:'num'},p.last_close==null?'—':p.last_close),
       $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)),
+      $('td',{style:'text-align:left;font-size:10px'},$('span',{class:ecls(p.earn_read)},p.earn_read||'—'),p.eps_growth!=null?$('span',{class:'muted'},` ${p.eps_growth>0?'+':''}${p.eps_growth}%`):''),
       $('td',{class:'num accent'},p.ens),
       $('td',{class:'mono muted',style:'font-size:10px'},`${p.rule_pct}/${p.ml_pct}/${p.ai_pct}`))));
     t.append(tb);holder.append($('div',{class:'tablewrap'},t));

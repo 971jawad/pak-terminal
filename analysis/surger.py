@@ -132,6 +132,38 @@ def _pick_list(scored, score_col, K, last_close):
             "basket_ret_eligible": round(float(np.mean(re)), 4) if re else None}
 
 
+def _load_fund() -> dict:
+    """Broad current fundamentals (annual EPS + YoY growth) scraped from
+    dps.psx.com.pk/company/*, cached. Used to tag each pick as earnings-backed or
+    price-ahead — a forward CONTEXT read (the surge's earnings backing), not a
+    backtested edge (deep quarterly history for that lives only in filing PDFs)."""
+    import json
+    f = config.DATA / "fundamentals_universe.json"
+    if not f.exists():
+        return {}
+    try:
+        rows = json.loads(f.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out = {}
+    for r in rows:
+        ann = r.get("eps_annual") or {}
+        gr = r.get("eps_growth_yoy")
+        latest = next(iter(ann.values()), None) if ann else None
+        if latest is None:
+            read = "—"
+        elif gr is None:
+            read = "?"
+        elif gr > 15:
+            read = "earnings-backed"
+        elif gr < -15:
+            read = "price-ahead"
+        else:
+            read = "flat"
+        out[r["symbol"]] = {"eps_latest": latest, "eps_growth": gr, "earn_read": read}
+    return out
+
+
 def predict(entry_ym, K: int = 15, min_adv: float = config.MIN_ADV) -> dict:
     mp, feats = _prep(min_adv)
     entry = pd.Period(entry_ym, "M")
@@ -167,6 +199,17 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
     entry = completed[-1] if completed else sorted(el.ym.unique())[-1]
     out = predict(entry, K=15, min_adv=min_adv)
+    # tag every pick with its earnings-backing (forward context, not an edge)
+    fund = _load_fund()
+    for d in out.get("by_method", {}).values():
+        for p in d.get("picks", []):
+            fu = fund.get(p["symbol"], {})
+            p["eps_growth"] = fu.get("eps_growth")
+            p["earn_read"] = fu.get("earn_read", "—")
+    for p in out.get("picks", []):
+        fu = fund.get(p["symbol"], {})
+        p["eps_growth"] = fu.get("eps_growth")
+        p["earn_read"] = fu.get("earn_read", "—")
     # honest OOS scorecard from the walk-forward bake-off (held-out second half, K=15)
     out["scorecard"] = {
         "horizon_months": H, "basket_K": 15,
