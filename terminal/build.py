@@ -1039,8 +1039,45 @@ PANELS.Surger=()=>{
   return w;
 };
 
+PANELS.Catalysts=()=>{
+  const w=$('div',{});const C=D.catalysts||{};
+  const pill='font-family:var(--mono);font-size:12px;padding:4px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--panel2);color:var(--ink);cursor:pointer';
+  w.append($('h2',{class:'sect-title'},'Live Catalysts'),
+    $('p',{class:'lead'},'Material PSX announcements from the official portal (dps.psx.com.pk), last 30 days — earnings, dividends, rights/bonus, corporate actions. AWARENESS only: post-announcement drift is not tradeable on next-day entry (I tested it), so this shows WHAT was announced for you to judge — it is not an edge.'));
+  const meta=$('div',{class:'card'});
+  meta.append($('h3',{},'Recent announcements ',$('span',{class:'tag info'},`as of ${C.as_of||'—'} · ${C.n_total||0} in ${C.window_days||30}d`)));
+  const cc=$('div',{class:'chipwrap',style:'margin-top:6px'});
+  Object.entries(C.counts||{}).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>cc.append($('span',{class:'mchip'},`${k}: ${v}`)));
+  meta.append(cc);w.append(meta);
+  const pc=$('div',{class:'card',style:'margin-top:16px'});
+  const types=['ALL','EARNINGS','DIVIDEND','RIGHTS/BONUS','CORP-ACTION','RATING'];
+  let cur='ALL';const fb={};const sel=$('div',{class:'chipwrap'});
+  types.forEach(t=>{const b=$('button',{style:pill},t);fb[t]=b;b.onclick=()=>{cur=t;draw();};sel.append(b);});
+  pc.append(sel);const holder=$('div',{});pc.append(holder);
+  function draw(){
+    holder.innerHTML='';
+    Object.entries(fb).forEach(([t,b])=>{b.style.borderColor=t===cur?'var(--accent)':'var(--bd)';b.style.color=t===cur?'var(--accent)':'var(--ink)';});
+    const items=(C.items||[]).filter(it=>cur==='ALL'||it.type===cur);
+    const t=$('table',{style:'margin-top:12px'});
+    t.append($('thead',{},$('tr',{},...['Date','Sym','⚡','Type','Announcement'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    items.forEach(it=>tb.append($('tr',{},
+      $('td',{class:'mono muted',style:'font-size:11px'},it.date),
+      $('td',{},$('b',{},it.symbol)),
+      $('td',{style:'text-align:center'},it.eligible?'⚡':''),
+      $('td',{},$('span',{class:'mchip',style:'font-size:10px'},it.type)),
+      $('td',{style:'text-align:left;font-size:12px'},it.title))));
+    if(!items.length)tb.append($('tr',{},$('td',{colspan:'5',class:'muted'},'none in window')));
+    t.append(tb);holder.append($('div',{class:'tablewrap'},t));
+  }
+  draw();
+  pc.append($('div',{class:'note'},C.note||''));
+  w.append(pc);
+  return w;
+};
+
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],

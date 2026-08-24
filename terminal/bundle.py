@@ -12,7 +12,8 @@ import pandas as pd
 
 from pakterm import config, data
 from analysis import regime, connections, events, sentiment, surges, mood, predictor, flows
-from analysis import analysis_filter, surger
+from analysis import analysis_filter, surger, catalysts
+from analysis import futures_predictor as _F
 
 
 def _series_xy(s: pd.Series, r=4):
@@ -174,8 +175,20 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "strategy": strat,
         "analysis_filter": analysis_filter.filter_result(min_adv),  # SEPARATE overlay
         "surger": surger.live_result(min_adv),                      # SEPARATE predictor
+        "catalysts": _catalyst_feed(min_adv),                       # SEPARATE live feed
     }
     return bundle
+
+
+def _catalyst_feed(min_adv):
+    """Live PSX announcement feed; graceful on network failure."""
+    try:
+        _p = _F.feature_panel(min_adv)
+        elig = set(_p[(_p.date == _p.date.max()) & _p.eligible].symbol)
+        return catalysts.catalyst_feed(days=30, eligible=elig)
+    except Exception as e:
+        return {"as_of": None, "items": [], "counts": {}, "n_total": 0,
+                "note": f"catalyst feed unavailable ({type(e).__name__})"}
 
 
 def main():
