@@ -176,8 +176,15 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "analysis_filter": analysis_filter.filter_result(min_adv),  # SEPARATE overlay
         "surger": surger.live_result(min_adv),                      # SEPARATE predictor
         "catalysts": _catalyst_feed(min_adv),                       # SEPARATE live feed
+        "macro_live": _macro_live(),                                # weekly-refreshed macro+news
     }
     return bundle
+
+
+def _macro_live():
+    wb = _load_json(config.MACRO_DIR / "worldbank.json", {})
+    hl = _load_json(config.MACRO_DIR / "headlines.json", {"headlines": [], "as_of": None})
+    return {"worldbank": wb, "headlines": hl.get("headlines", []), "as_of": hl.get("as_of")}
 
 
 def _catalyst_feed(min_adv):

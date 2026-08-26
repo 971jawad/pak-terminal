@@ -1078,8 +1078,34 @@ PANELS.Catalysts=()=>{
   return w;
 };
 
+PANELS.MacroNews=()=>{
+  const w=$('div',{});const M=D.macro_live||{};const WB=M.worldbank||{};
+  w.append($('h2',{class:'sect-title'},'Macro & Policy'),
+    $('p',{class:'lead'},'Auto-refreshed weekly. Annual macro numbers from the World Bank (keyless, reliable) + recent Pakistan macro / policy / geopolitical headlines scraped from the business press. Keeps the terminal current on inflation, rates, IMF, budget and geopolitics without a manual reseed.'));
+  const LBL={inflation_cpi_annual_pct:['Inflation (CPI)','%'],gdp_growth_pct:['GDP growth','%'],
+    current_account_pctgdp:['Current account','% GDP'],reserves_usd:['FX reserves','$'],
+    policy_lending_rate_pct:['Lending rate','%'],pop_millions:['Population','']};
+  const nc=$('div',{class:'card'});
+  nc.append($('h3',{},'Macro snapshot ',$('span',{class:'tag info'},'World Bank · annual')));
+  const grid=$('div',{class:'grid cols3'});
+  Object.entries(LBL).forEach(([k,[lab,unit]])=>{const v=WB[k];if(!v||v.latest==null)return;
+    let val=v.latest; if(k==='reserves_usd')val='$'+(val/1e9).toFixed(1)+'b'; else if(k==='pop_millions')val=(val/1e6).toFixed(0)+'M'; else val=val+unit;
+    grid.append($('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v'},val),$('span',{class:'l'},`${lab} · ${v.latest_year}`))));});
+  nc.append(grid);w.append(nc);
+  const hc=$('div',{class:'card',style:'margin-top:16px'});
+  hc.append($('h3',{},'Macro / policy / geopolitical headlines ',$('span',{class:'tag warn'},`as of ${M.as_of||'—'}`)));
+  const hl=M.headlines||[];
+  if(hl.length){const ul=$('div',{});
+    hl.forEach(h=>ul.append($('div',{class:'note',style:'border-left:2px solid var(--accent);margin:6px 0;font-size:13px'},h)));
+    hc.append(ul);
+  } else hc.append($('div',{class:'muted'},'no headlines (refresh pending)'));
+  hc.append($('div',{class:'note'},'Headlines are AWARENESS from the business press (profit.pakistantoday.com.pk) — context for the macro regime, not a trading signal. Numbers in-text are as-reported. Refreshes weekly via CI.'));
+  w.append(hc);
+  return w;
+};
+
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],
