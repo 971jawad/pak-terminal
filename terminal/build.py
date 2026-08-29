@@ -1181,6 +1181,37 @@ PANELS.Ultimate=()=>{
   } else hc.append($('div',{class:'muted'},'book unavailable'));
   hc.append($('div',{class:'note'},U.note||''));
   w.append(hc);
+  // sniper satellite — opportunity-gated 1-month top-5
+  const SN=D.sniper||{};const SB=SN.backtest||{};const so=SN.opportunity||{};
+  const snc=$('div',{class:'card',style:'margin-top:16px'});
+  snc.append($('h3',{},'Sniper satellite — 1-month top-5 ',$('span',{class:'badge '+((SN.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},SN.action||'—')));
+  snc.append($('div',{class:'mono muted',style:'font-size:12px'},`entry ${SN.entry_month||'—'} · opportunity gate: dispersion ${so.dispersion} vs median ${so.disp_median} (${so.high_dispersion?'HIGH':'low'}) · ${so.risk_on?'risk-on':'risk-off'} → ${so.trade?'DEPLOY':'sit in cash'}`));
+  const so2=SB.oos||{};
+  const kpi2=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  snc.append($('div',{class:'grid cols2',style:'margin-top:8px'},
+    kpi2(so2.sharpe!=null?so2.sharpe.toFixed(2):'—','Sharpe (OOS)','accent'),
+    kpi2(so2.calmar!=null?so2.calmar.toFixed(2):'—','Calmar (OOS)','accent'),
+    kpi2(so2.maxdd!=null?(so2.maxdd*100).toFixed(0)+'%':'—','maxDD (OOS)'),
+    kpi2(SB.precision!=null?(SB.precision*100).toFixed(0)+'%':'—','precision')));
+  const sv=SB.vs||[];
+  if(sv.length){const t=$('table',{style:'margin-top:10px'});
+    t.append($('thead',{},$('tr',{},...['Variant','Sharpe','Calmar','maxDD'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    sv.forEach(r=>tb.append($('tr',{style:(r.name||'').includes('this')?'background:var(--accent-soft)':''},
+      $('td',{},r.name),$('td',{class:'num'},r.sharpe.toFixed(2)),$('td',{class:'num'},r.calmar.toFixed(2)),$('td',{class:'num down'},(r.maxdd*100).toFixed(0)+'%'))));
+    t.append(tb);snc.append($('div',{class:'tablewrap'},t));}
+  const sp=SN.picks||[];
+  if(sp.length){const t=$('table',{style:'margin-top:10px'});
+    t.append($('thead',{},$('tr',{},...['#','Sym','Sector','Weight','Entry','Now','Return'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    sp.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+      $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+      $('td',{class:'num accent'},(p.weight*100).toFixed(1)+'%'),
+      $('td',{class:'num muted'},p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
+      $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)))));
+    t.append(tb);snc.append($('div',{class:'tablewrap'},t));}
+  snc.append($('div',{class:'note'},SN.note||''));
+  w.append(snc);
   // consensus filter — common picks across the running models (this month)
   const CN=D.consensus||{};const cr=CN.rows||[];const bk=CN.buckets||{};
   const cc=$('div',{class:'card',style:'margin-top:16px'});
