@@ -115,6 +115,7 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
     sovereign = _load_json(config.DATA / "sovereign.json",
                            {"ratings": [], "external_debt": [], "imf_programs": [], "macro_annual": []})
     sources = _load_json(config.KNOWLEDGE_DIR / "data_sources.json", {"sources": []})
+    surg_res = surger.live_result(min_adv)          # computed once, reused for consensus
 
     bundle = {
         "meta": {
@@ -174,12 +175,52 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "flows": flows.summary(),
         "strategy": strat,
         "analysis_filter": analysis_filter.filter_result(min_adv),  # SEPARATE overlay
-        "surger": surger.live_result(min_adv),                      # SEPARATE predictor
+        "surger": surg_res,                                         # SEPARATE predictor
         "catalysts": _catalyst_feed(min_adv),                       # SEPARATE live feed
         "macro_live": _macro_live(),                                # weekly-refreshed macro+news
         "ultimate": _ultimate(min_adv),                             # the beta-harvester (honest winner)
+        "consensus": _consensus(strat, surg_res),                   # cross-model agreement filter
     }
     return bundle
+
+
+def _consensus(strat, surg):
+    """Cross-model agreement for the current month, computed from picks already in
+    the bundle (no extra model fits): names >=2 running models agree on."""
+    import numpy as np
+    picks = {}
+    def add(model, sym, ret, sector=None):
+        d = picks.setdefault(sym, {"models": set(), "ret": None, "sector": sector})
+        d["models"].add(model)
+        if ret is not None:
+            d["ret"] = ret
+        if sector:
+            d["sector"] = sector
+    live = strat.get("live", {}) or {}
+    for l in live.get("legs", []):
+        add("Gated Top-5", l["symbol"], l.get("ret"), l.get("sector"))
+    for hh, dd in ((strat.get("predictor_live", {}) or {}).get("by_horizon", {}) or {}).items():
+        for l in dd.get("legs", []):
+            add(f"ML {hh}m", l["symbol"], l.get("ret"), l.get("sector"))
+    for meth, dd in (surg.get("by_method", {}) or {}).items():
+        for p in dd.get("picks", []):
+            add(f"Surger-{meth}", p["symbol"], p.get("ret"), p.get("sector"))
+    allr = [(len(v["models"]), v["ret"]) for v in picks.values() if v["ret"] is not None]
+    def bucket(lo, hi):
+        rs = [r for n, r in allr if lo <= n <= hi]
+        return {"n": len(rs),
+                "avg": (round(float(np.mean(rs)), 4) if rs else None),
+                "pos": (round(float(np.mean([x > 0 for x in rs])), 2) if rs else None)}
+    rows = [{"symbol": s, "n_models": len(v["models"]), "ret": v["ret"],
+             "sector": v["sector"], "models": sorted(v["models"])}
+            for s, v in picks.items() if len(v["models"]) >= 2]
+    rows.sort(key=lambda r: (-r["n_models"], -(r["ret"] if r["ret"] is not None else -9)))
+    return {"entry_month": live.get("entry_month"), "as_of": live.get("as_of"),
+            "n_distinct": len(picks), "rows": rows,
+            "buckets": {"solo": bucket(1, 1), "multi": bucket(2, 3), "strong": bucket(4, 99)},
+            "note": "Consensus filter — names that >=2 of the currently-running models agree on "
+                    "this month. Solo picks (1 model) average negative; agreement removes the "
+                    "idiosyncratic losers. One-month observation, not a validated edge."}
 
 
 def _ultimate(min_adv):
