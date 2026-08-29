@@ -1104,8 +1104,61 @@ PANELS.MacroNews=()=>{
   return w;
 };
 
+PANELS.Ultimate=()=>{
+  const w=$('div',{});const U=D.ultimate||{};const BT=U.backtest||{};
+  w.append($('h2',{class:'sect-title'},'Ultimate — PSX Beta Harvester'),
+    $('p',{class:'lead'},'The honest winner from the whole research arc. NOT a stock-picker — a risk-managed premia harvester that beats every selection model built here, out-of-sample. It stops fighting the fat-tailed surger problem and instead extracts three robust, parameter-free edges: own the broad liquid universe (beta + small-size/rebalancing premium), weight by inverse-volatility on the low-vol half (risk parity + the low-vol anomaly), and scale exposure by the trend gate (the one validated edge). Monthly rebalance, no ML, no fitting, no look-ahead.'));
+  // live positioning
+  const lc=$('div',{class:'card'});
+  const rs=U.risk_state||'—';
+  lc.append($('h3',{},'Live positioning ',$('span',{class:'badge '+(U.exposure>=0.5?'on':'off'),style:'font-size:14px'},`${rs} · ${Math.round((U.exposure||0)*100)}% invested`)));
+  lc.append($('div',{class:'mono muted',style:'font-size:12px'},`as of ${U.as_of||'—'} · universe ${U.n_universe||0} liquid names · holding ${U.n_held||0} low-vol names · ${Math.round((U.cash_pct||0)*100)}% in T-bills`));
+  w.append(lc);
+  // scorecard vs baselines
+  const sc=$('div',{class:'card',style:'margin-top:16px'});
+  sc.append($('h3',{},'Why it wins ',$('span',{class:'tag ok'},'walk-forward · OOS validated')));
+  const f=BT.full||{},o=BT.oos||{};
+  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  sc.append($('div',{class:'grid cols2'},
+    kpi(f.sharpe!=null?f.sharpe.toFixed(2):'—','Sharpe (full)','accent'),
+    kpi(f.calmar!=null?f.calmar.toFixed(2):'—','Calmar (full)','accent'),
+    kpi(f.maxdd!=null?(f.maxdd*100).toFixed(0)+'%':'—','max drawdown'),
+    kpi(f.cagr!=null?'+'+(f.cagr*100).toFixed(0)+'%':'—','CAGR (full)')));
+  sc.append($('div',{class:'grid cols2',style:'margin-top:8px'},
+    kpi(o.sharpe!=null?o.sharpe.toFixed(2):'—','Sharpe (OOS)','accent'),
+    kpi(o.calmar!=null?o.calmar.toFixed(2):'—','Calmar (OOS)','accent'),
+    kpi(o.maxdd!=null?(o.maxdd*100).toFixed(0)+'%':'—','maxDD (OOS)'),
+    kpi(o.cagr!=null?'+'+(o.cagr*100).toFixed(0)+'%':'—','CAGR (OOS)')));
+  const vs=BT.vs||[];
+  if(vs.length){const t=$('table',{style:'margin-top:12px'});
+    t.append($('thead',{},$('tr',{},...['System','Sharpe','Calmar'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    vs.forEach(r=>tb.append($('tr',{style:r.name.includes('Harvester')?'background:var(--accent-soft)':''},
+      $('td',{},r.name),$('td',{class:'num'},r.sharpe.toFixed(2)),$('td',{class:'num'},r.calmar.toFixed(2)))));
+    t.append(tb);sc.append($('div',{class:'tablewrap'},t));}
+  sc.append($('div',{class:'note'},BT.method||''));
+  w.append(sc);
+  // holdings
+  const hc=$('div',{class:'card',style:'margin-top:16px'});
+  hc.append($('h3',{},'Current book — largest weights (inverse-vol, low-vol half)'));
+  const hold=U.top_holdings||[];
+  if(hold.length){const t=$('table');
+    t.append($('thead',{},$('tr',{},...['Symbol','Sector','Weight','Vol','Close'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    hold.forEach(h=>tb.append($('tr',{},$('td',{},$('b',{},h.symbol)),
+      $('td',{class:'muted',style:'text-align:left;font-size:11px'},h.sector),
+      $('td',{class:'num accent'},(h.weight*100).toFixed(1)+'%'),
+      $('td',{class:'num muted'},h.vol_1m!=null?(h.vol_1m*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num muted'},h.close))));
+    t.append(tb);hc.append($('div',{class:'tablewrap'},t));
+  } else hc.append($('div',{class:'muted'},'book unavailable'));
+  hc.append($('div',{class:'note'},U.note||''));
+  w.append(hc);
+  return w;
+};
+
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],

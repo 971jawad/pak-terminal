@@ -12,7 +12,7 @@ import pandas as pd
 
 from pakterm import config, data
 from analysis import regime, connections, events, sentiment, surges, mood, predictor, flows
-from analysis import analysis_filter, surger, catalysts
+from analysis import analysis_filter, surger, catalysts, harvester
 from analysis import futures_predictor as _F
 
 
@@ -177,8 +177,16 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "surger": surger.live_result(min_adv),                      # SEPARATE predictor
         "catalysts": _catalyst_feed(min_adv),                       # SEPARATE live feed
         "macro_live": _macro_live(),                                # weekly-refreshed macro+news
+        "ultimate": _ultimate(min_adv),                             # the beta-harvester (honest winner)
     }
     return bundle
+
+
+def _ultimate(min_adv):
+    try:
+        return harvester.live_book(min_adv)
+    except Exception as e:
+        return {"holdings": [], "top_holdings": [], "note": f"unavailable ({type(e).__name__})"}
 
 
 def _macro_live():
