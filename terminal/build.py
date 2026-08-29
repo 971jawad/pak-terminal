@@ -1138,6 +1138,33 @@ PANELS.Ultimate=()=>{
     t.append(tb);sc.append($('div',{class:'tablewrap'},t));}
   sc.append($('div',{class:'note'},BT.method||''));
   w.append(sc);
+  // month-by-month backtest (collapsible by year)
+  const mo=U.monthly||[];
+  if(mo.length){
+    const mc=$('div',{class:'card',style:'margin-top:16px'});
+    mc.append($('h3',{},'Backtest — month by month ',$('span',{class:'tag ok'},'realised net returns · click a year')));
+    const byYear={};mo.forEach(r=>{const y=r.ym.slice(0,4);(byYear[y]=byYear[y]||[]).push(r);});
+    Object.keys(byYear).sort().reverse().forEach(y=>{
+      const rows=byYear[y];const yr=rows.reduce((a,r)=>a*(1+r.net),1)-1;
+      const hdr=$('button',{style:'width:100%;text-align:left;font-family:var(--mono);font-size:13px;padding:8px 11px;border:1px solid var(--bd);border-radius:8px;background:var(--panel2);color:var(--ink);cursor:pointer;margin-top:6px;display:flex;justify-content:space-between;align-items:center'},
+        $('span',{},`▸ ${y}  (${rows.length} mo)`),$('span',{class:'num '+cls(yr)},pct(yr,1)));
+      const body=$('div',{style:'display:none'});
+      const t=$('table',{style:'margin-top:6px'});
+      t.append($('thead',{},$('tr',{},...['Month','Exposure','Net','Cumulative','Names'].map(h=>$('th',{},h)))));
+      const tb=$('tbody');
+      rows.forEach(r=>tb.append($('tr',{},$('td',{class:'mono'},r.ym),
+        $('td',{class:'num muted'},Math.round(r.exposure*100)+'%'),
+        $('td',{class:'num '+cls(r.net)},pct(r.net,1)),
+        $('td',{class:'num '+cls(r.cum)},pct(r.cum,1)),
+        $('td',{class:'num muted'},r.n))));
+      t.append(tb);body.append($('div',{class:'tablewrap'},t));
+      let open=false;
+      hdr.onclick=()=>{open=!open;body.style.display=open?'':'none';hdr.firstChild.textContent=`${open?'▾':'▸'} ${y}  (${rows.length} mo)`;};
+      mc.append(hdr,body);
+    });
+    mc.append($('div',{class:'note'},'Each month: the trend-gated exposure, the realised net return of the inverse-vol/low-vol book, and cumulative since inception. Net of ~0.2%/rebalance. This is the actual series behind the scorecard above — no look-ahead.'));
+    w.append(mc);
+  }
   // holdings
   const hc=$('div',{class:'card',style:'margin-top:16px'});
   hc.append($('h3',{},'Current book — largest weights (inverse-vol, low-vol half)'));

@@ -41,6 +41,40 @@ BACKTEST = {
 }
 
 
+def monthly_backtest(min_adv: float = config.MIN_ADV) -> list:
+    """Month-by-month realised returns of the harvester (IV x low-vol, gated,
+    monthly rebalance) — the exact series behind the summary scorecard."""
+    panel = F.feature_panel(min_adv)
+    mp = panel.groupby(["symbol", "ym"]).last().reset_index()
+    piv = mp.pivot(index="ym", columns="symbol", values="close").sort_index()
+    mp["liq"] = mp.is_equity & (mp.adv_20 > min_adv)
+    sig = ensemble_signal(data.market_index(min_adv))
+    mac = data.load_macro_monthly(); mac.index = mac.index.to_period("M")
+    fwd = piv.shift(-1) / piv - 1
+    fl = fwd.reset_index().melt(id_vars="ym", var_name="symbol", value_name="f1")
+    d = mp.merge(fl, on=["symbol", "ym"], how="left")
+    months = [m for m in piv.index if d[(d.ym == m) & d.liq]["f1"].notna().sum() >= 20]
+    out, eq = [], 1.0
+    for m in months:
+        g = d[(d.ym == m) & d.liq].dropna(subset=["f1"]).copy()
+        if len(g) < 20:
+            continue
+        vol = g["vol_1m"].fillna(g["vol_1m"].median()).clip(lower=1e-4)
+        med = vol.median()
+        w = np.where(vol.values <= med, 1.0 / vol.values, 0.0)
+        w = w / w.sum()
+        gross = float(np.sum(w * g["f1"].values))
+        e = float(sig.asof(g.date.max())) if len(sig) else 1.0
+        if not np.isfinite(e):
+            e = 0.0
+        rate = float(mac["policy_rate"].reindex([m]).iloc[0]) if m in mac.index else 11.0
+        net = e * (gross - COST) + (1 - e) * (rate / 100 / 12)
+        eq *= (1 + net)
+        out.append({"ym": str(m), "exposure": round(e, 2), "net": round(net, 4),
+                    "cum": round(eq - 1, 4), "n": int((w > 0).sum())})
+    return out
+
+
 def live_book(min_adv: float = config.MIN_ADV, top_n: int = 20) -> dict:
     """Current harvester positioning: gate exposure + the inverse-vol/low-vol
     weights it would hold now (largest weights shown)."""
@@ -72,6 +106,7 @@ def live_book(min_adv: float = config.MIN_ADV, top_n: int = 20) -> dict:
         "cash_pct": round(1 - expo, 2),
         "top_holdings": holdings,
         "backtest": BACKTEST,
+        "monthly": monthly_backtest(min_adv),
         "note": ("PSX Beta Harvester — the honest optimum. Own the low-vol half of the liquid "
                  "universe, inverse-vol weighted (risk parity), exposure scaled by the trend "
                  "gate, rebalanced monthly. No stock-picking. It beats every selection model "
