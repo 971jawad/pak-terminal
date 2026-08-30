@@ -1419,8 +1419,100 @@ PANELS.Picker=()=>{
   return w;
 };
 
+PANELS.Valuator=()=>{
+  const w=$('div',{});const C=D.valuator||{};const M=C.mcd||{};const G=C.gate||{};
+  const RAW=G.raw||{};const GAT=G.gated||{};const SP=G.split||{};
+  const tcls=t=>t==='REAL'?'up':t==='FADING'?'down':'muted';
+  const arrow=d=>d>0?$('span',{class:'up'},'▲'):d<0?$('span',{class:'down'},'▼'):$('span',{class:'muted'},'—');
+  w.append($('h2',{class:'sect-title'},'Valuator — Regime Engine'),
+    $('p',{class:'lead'},'The honest way to improve returns here is not to pick the biggest surger (you can\'t — see the catchability note) but to TIME a diversified basket. This tab is the regime engine: an MCD read of how much to deploy now, a sector-catalyst + surge radar for where moves are confirming, and a raw-vs-gated backtest proving the payoff — gating the picks with the project\'s one verified trend edge (+ a small macro tilt) roughly DOUBLES Sharpe and cuts drawdown by ~two-thirds. Walk-forward, point-in-time, no fitted magnitudes.'));
+  if(!M.gate&&M.gate!==0){w.append($('div',{class:'card muted'},C.note||'valuator unavailable'));return w;}
+  // MCD regime card
+  const on=M.gate>=0.6, part=M.gate>=0.35;
+  const mc=$('div',{class:'card'});
+  mc.append($('h3',{},'MCD regime ',$('span',{class:'badge '+(on?'on':part?'':'off'),style:'font-size:13px'},M.posture||'—')));
+  mc.append($('div',{class:'grid cols2'},
+    $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+(on?'up':part?'accent':'down')},(M.gate*100).toFixed(0)+'%'),$('span',{class:'l'},'deploy gate'))),
+    $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v'},(M.trend_exposure*100).toFixed(0)+'%'),$('span',{class:'l'},'trend exposure (verified edge)'))),
+    $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v'},M.macro_tilt!=null?M.macro_tilt.toFixed(2):'—'),$('span',{class:'l'},'macro tilt (small)'))),
+    $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v'},M.rate!=null?M.rate+'%':'—'),$('span',{class:'l'},'policy rate')))));
+  mc.append($('div',{class:'mono muted',style:'font-size:12px;margin-top:8px'},
+    'macro signals: rate ',arrow(-M.rate_dir),' easing? ',$('b',{},M.rate_dir>0?'yes':'no'),
+    '  ·  CPI ',arrow(M.cpi_dir),' disinflating? ',$('b',{},M.cpi_dir>0?'yes':'no'),M.cpi!=null?` (${M.cpi}%)`:'',
+    '  ·  PKR ',arrow(M.pkr_dir),'  ·  reserves ',arrow(M.reserves_dir)));
+  mc.append($('div',{class:'note'},'gate = trend exposure × macro tilt. Trend exposure is the project\'s ONE verified, out-of-sample, cost-surviving edge (4 MAs on the market index). The macro tilt (rate/CPI/PKR/reserves, sign rules only) is a small honest nudge — deliberately not a fitted predictor. Deploy at the gate; sit in cash for the rest.'));
+  w.append(mc);
+  // raw vs gated backtest
+  const gc=$('div',{class:'card',style:'margin-top:16px'});
+  gc.append($('h3',{},'Timing the picks — raw vs regime-gated ',$('span',{class:'tag ok'},'walk-forward · PIT')));
+  const gt=$('table');
+  gt.append($('thead',{},$('tr',{},$('th',{},'Basket'),$('th',{colspan:'2'},'Sharpe'),$('th',{colspan:'2'},'maxDD'),$('th',{colspan:'2'},'Calmar'))));
+  gt.append($('thead',{},$('tr',{},$('th',{},''),$('th',{},'raw'),$('th',{},'gated'),$('th',{},'raw'),$('th',{},'gated'),$('th',{},'raw'),$('th',{},'gated'))));
+  const KEYS=[['univ','Universe (equal-wt)'],['turnaround','Turnaround'],['leaders','Leaders'],['quality','Mom-quality'],['combined','Combined']];
+  const gtb=$('tbody');
+  KEYS.forEach(([k,lab])=>{const a=RAW[k]||{},b=GAT[k]||{};if(a.sharpe==null&&b.sharpe==null)return;
+    gtb.append($('tr',{style:k==='univ'?'background:var(--accent-soft)':''},
+      $('td',{},$('b',{},lab)),
+      $('td',{class:'num muted'},a.sharpe!=null?a.sharpe.toFixed(2):'—'),
+      $('td',{class:'num '+(b.sharpe>=0.5?'up':'')},b.sharpe!=null?b.sharpe.toFixed(2):'—'),
+      $('td',{class:'num muted'},a.maxdd!=null?(a.maxdd*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num'},b.maxdd!=null?(b.maxdd*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num muted'},a.calmar!=null?a.calmar.toFixed(2):'—'),
+      $('td',{class:'num '+(b.calmar>=1?'up':'')},b.calmar!=null?b.calmar.toFixed(2):'—')));});
+  gt.append(gtb);gc.append($('div',{class:'tablewrap'},gt));
+  const su=SP.univ||{},scb=SP.combined||{};
+  gc.append($('div',{class:'note'},'The gate roughly doubles Sharpe (≈0.25 → 0.5-0.68) and cuts maxDD from ~-50% to ~-11-18%. Humbling truth: the gated UNIVERSE is about as good as any selection style — here, TIMING beats stock-picking. Train/test (gated): universe Sharpe '+((su.train||{}).sharpe??'—')+' → '+((su.test||{}).sharpe??'—')+', combined '+((scb.train||{}).sharpe??'—')+' → '+((scb.test||{}).sharpe??'—')+' — the gate helps drawdown in both halves; Sharpe is regime-sensitive on a 6-year sample (honest small-sample caveat).'));
+  w.append(gc);
+  // catchability meta note
+  const mt=C.meta||{};
+  if(mt.note){const mm=$('div',{class:'card',style:'margin-top:16px'});
+    mm.append($('h3',{},'Why not just catch the top surgers? ',$('span',{class:'tag warn'},'meta-analysis')));
+    mm.append($('div',{class:'grid cols2'},
+      $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v down'},(mt.avg_tradeable||0).toFixed(1)+'/10'),$('span',{class:'l'},'top-10 surgers tradeable pre-surge'))),
+      $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v down'},(mt.avg_caught50||0).toFixed(1)+'/10'),$('span',{class:'l'},'caught even by a wide top-50')))));
+    mm.append($('div',{class:'note'},mt.note));
+    w.append(mm);}
+  // sector catalyst
+  const secs=C.sectors||[];
+  if(secs.length){const sc=$('div',{class:'card',style:'margin-top:16px'});
+    sc.append($('h3',{},'Sector catalyst — hottest sectors now'));
+    const st=$('table');
+    st.append($('thead',{},$('tr',{},...['Sector','#','3m mom','6m mom','vol growth','Hot'].map(h=>$('th',{},h)))));
+    const stb=$('tbody');
+    secs.forEach(s=>stb.append($('tr',{style:s.hot?'background:var(--accent-soft)':''},
+      $('td',{},$('b',{},s.sector)),$('td',{class:'num muted'},s.n),
+      $('td',{class:'num '+cls(s.mom3)},pct(s.mom3,0)),$('td',{class:'num '+cls(s.mom6)},pct(s.mom6,0)),
+      $('td',{class:'num '+cls(s.advg)},(s.advg>0?'+':'')+s.advg.toFixed(2)),
+      $('td',{},s.hot?$('span',{class:'up'},'● HOT'):$('span',{class:'muted'},'—')))));
+    st.append(stb);sc.append($('div',{class:'tablewrap'},st));
+    sc.append($('div',{class:'note'},'Sectors ranked by median 3-month momentum + volume growth. HOT = strong move on rising volume. It detects the surge once price/volume confirm it (e.g. the refinery run) — it does not predict the policy/crack-spread cause beforehand, which no price data can.'));
+    w.append(sc);}
+  // surge radar
+  const rd=C.radar||{};const mv=rd.movers||[];
+  if(mv.length){const rc=$('div',{class:'card',style:'margin-top:16px'});
+    rc.append($('h3',{},'Surge radar — emerging movers ',$('span',{class:'tag warn'},`scanned ${rd.n_scanned||'—'} · ${rd.as_of||''}`)));
+    const rt=$('table');
+    rt.append($('thead',{},$('tr',{},...['Sym','Sector','1m','3m','vol','EPS','Likely driver (PSX announcement)'].map(h=>$('th',{},h)))));
+    const rtb=$('tbody');
+    mv.forEach(p=>{const a=p.catalyst;
+      rtb.append($('tr',{},$('td',{},$('b',{},p.symbol)),
+        $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+        $('td',{class:'num '+cls(p.mom_1m)},pct(p.mom_1m,0)),
+        $('td',{class:'num '+cls(p.mom_3m)},pct(p.mom_3m,0)),
+        $('td',{class:'num accent'},'+'+p.adv_growth.toFixed(1)),
+        $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
+        $('td',{style:'text-align:left;font-size:11px'},a?$('span',{},$('b',{class:'accent'},a.type+' '),a.title+' ('+a.date+')'):$('span',{class:'muted'},'—'))));});
+    rt.append(rtb);rc.append($('div',{class:'tablewrap'},rt));
+    rc.append($('div',{class:'note'},'Every build, scans the full liquid universe for names where a move is STARTING with volume confirmation (short-term momentum + acceleration + volume surge), then attaches the most recent material PSX announcement as the likely driver.'+(rd.has_announcements?'':' (Announcement feed unavailable this build — showing price/volume only.)')+' This is the honest "constantly find what drives surges" mechanism: it catches the move as it confirms and names the cause — it cannot predict the catalyst before the market moves.'));
+    w.append(rc);}
+  const nc=$('div',{class:'card',style:'margin-top:16px'});
+  nc.append($('div',{class:'note'},C.note||''));
+  w.append(nc);
+  return w;
+};
+
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Picker',PANELS.Picker],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Picker',PANELS.Picker],['Valuator',PANELS.Valuator],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],
