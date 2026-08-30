@@ -1345,6 +1345,28 @@ PANELS.Picker=()=>{
   ct.append(ctb);cmp.append($('div',{class:'tablewrap'},ct));
   cmp.append($('div',{class:'note'},'Compounded = growth of an annually-rebalanced top-15 over the test window. Beat-universe = share of years the style beat the equal-weight liquid universe. Top-decile hit = share of the 15 picks that landed in that year\'s top-10% surgers (10% = pure chance). None of the styles clears the universe convincingly, and hit-rate sits at chance — the edge over just owning the market is small and regime-dependent.'));
   w.append(cmp);
+  // risk-adjusted (monthly path)
+  const RK=S.risk||{};
+  if(RK.univ){
+    const rc=$('div',{class:'card',style:'margin-top:16px'});
+    rc.append($('h3',{},'Risk-adjusted ',$('span',{class:'tag warn'},`monthly path · ${RK.univ.n||''} mo`)));
+    const rt=$('table');
+    rt.append($('thead',{},$('tr',{},...['Style','CAGR','Volatility','Sharpe','maxDD','Calmar'].map(h=>$('th',{},h)))));
+    const rtb=$('tbody');
+    const rrow=(key,lab,hl)=>{const d=RK[key]||{};if(!d.sharpe&&d.sharpe!==0)return;
+      rtb.append($('tr',{style:hl?'background:var(--accent-soft)':(key==='univ'?'border-bottom:2px solid var(--border)':'')},
+        $('td',{},$('b',{},lab)),
+        $('td',{class:'num'},d.cagr!=null?pct(d.cagr,0):'—'),
+        $('td',{class:'num'},d.vol!=null?(d.vol*100).toFixed(0)+'%':'—'),
+        $('td',{class:'num '+(d.sharpe>=0.5?'up':'down')},d.sharpe!=null?d.sharpe.toFixed(2):'—'),
+        $('td',{class:'num down'},d.maxdd!=null?(d.maxdd*100).toFixed(0)+'%':'—'),
+        $('td',{class:'num'},d.calmar!=null?d.calmar.toFixed(2):'—')));};
+    rrow('univ','Universe (equal-wt)',false);
+    ORDER.forEach(k=>rrow(k,LAB[k],k===rec));
+    rt.append(rtb);rc.append($('div',{class:'tablewrap'},rt));
+    rc.append($('div',{class:'note'},'The honest cost of chasing year-end surgers: buying a concentrated top-15 each January and holding the whole year — no rebalance, no gate — means you eat the full drawdowns. Sharpe ≈ 0.2-0.3 and maxDD −45% to −57%, and no style beats just owning the universe risk-adjusted. If you care about risk-adjusted return rather than raw year-end upside, the monthly-rebalanced, opportunity-gated Confluence / Ultimate tabs are far better (Sharpe ~1.2-1.5). Picker answers "who surges most by Dec 31", not "what is the smoothest ride".'));
+    w.append(rc);
+  }
   // annual table
   const ac=$('div',{class:'card',style:'margin-top:16px'});
   ac.append($('h3',{},'Full-year return of the top-15, by year'));

@@ -165,6 +165,57 @@ def _annual(mp, piv, k=K):
     return rows, summary
 
 
+def _pathstats(mp, piv, rf=0.11, k=K):
+    """Monthly path of each style's ANNUALLY-rebalanced top-15 (buy each Jan, hold,
+    mark monthly) -> Sharpe / annualised vol / maxDD / Calmar. Universe = equal-weight
+    monthly return of the liquid set (the benchmark). rf = SBP policy ~11%."""
+    months = list(piv.index)
+    idx = {m: i for i, m in enumerate(months)}
+    years = sorted({p.year for p in months})
+    held = {v: {} for v in VARIANTS}
+    for Y in years:
+        entry = pd.Period(f"{Y-1}-12", "M")
+        if entry not in idx:
+            continue
+        g = mp[(mp.ym == entry) & mp.liq].copy()
+        g = g[g.symbol.isin(piv.columns)]
+        if len(g) < 20:
+            continue
+        for v in VARIANTS:
+            held[v][Y] = list(g.assign(_s=_score(v, g)).nlargest(k, "_s").symbol)
+    liq_by = {ym: list(set(mp[(mp.ym == ym) & mp.liq].symbol) & set(piv.columns)) for ym in months}
+
+    def mret(names, m, pm):
+        if not names:
+            return np.nan
+        r = (piv.loc[m, names].astype(float) / piv.loc[pm, names].astype(float) - 1.0)
+        r = r.replace([np.inf, -np.inf], np.nan).dropna()
+        return float(r.mean()) if len(r) else np.nan
+
+    ser = {v: [] for v in VARIANTS}; ser["univ"] = []; ridx = []
+    for i in range(1, len(months)):
+        m, pm = months[i], months[i - 1]
+        if not any(m.year in held[v] for v in VARIANTS):
+            continue
+        ridx.append(m)
+        for v in VARIANTS:
+            ser[v].append(mret(held[v].get(m.year, []), m, pm))
+        ser["univ"].append(mret(liq_by.get(pm, []), m, pm))
+    out = {}
+    for key in list(VARIANTS) + ["univ"]:
+        r = pd.Series(ser[key], index=pd.PeriodIndex(ridx, freq="M")).dropna()
+        if len(r) < 6:
+            out[key] = {}; continue
+        eq = (1 + r).cumprod(); n = len(r); sd = r.std()
+        cagr = eq.iloc[-1] ** (12 / n) - 1
+        dd = float((eq / eq.cummax() - 1).min())
+        out[key] = {"cagr": round(cagr, 4), "vol": round(float(sd * np.sqrt(12)), 4),
+                    "sharpe": round(float((r.mean() - rf / 12) / sd * np.sqrt(12)) if sd > 0 else 0.0, 2),
+                    "maxdd": round(dd, 4), "calmar": round(cagr / abs(dd), 2) if dd < 0 else None,
+                    "n": int(n)}
+    return out
+
+
 def _current_picks(mp, piv, fu, k=K):
     """This year's start-of-year picks (entry = last Dec) marked to the latest close (YTD)."""
     cur_year = piv.index.max().year
@@ -206,6 +257,7 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     fu = _fund()
     mp, piv = _prep(min_adv)
     rows, summary = _annual(mp, piv)
+    summary["risk"] = _pathstats(mp, piv)
     current = _current_picks(mp, piv, fu)
     return {
         "annual": rows, "summary": summary, "current": current,
@@ -235,6 +287,14 @@ if __name__ == "__main__":
               f"{row['leaders']*100:>7.0f}%{row['quality']*100:>7.0f}%{row['combined']*100:>7.0f}%  {row['winner']}")
     print(f"\ncompounded: univ {s['univ_comp']}x | "
           + " | ".join(f"{v} {s[v]['comp']}x" for v in VARIANTS))
+    rk = s.get("risk", {})
+    print(f"\nrisk (monthly path, {rk.get('univ',{}).get('n','?')} months): "
+          f"{'style':11} {'CAGR':>6} {'Vol':>6} {'Sharpe':>7} {'maxDD':>6} {'Calmar':>7}")
+    for key in ["univ"] + list(VARIANTS):
+        d = rk.get(key, {})
+        if not d: continue
+        print(f"  {key:11} {d['cagr']*100:>5.0f}% {d['vol']*100:>5.0f}% {d['sharpe']:>7.2f} "
+              f"{d['maxdd']*100:>5.0f}% {(d['calmar'] if d['calmar'] is not None else 0):>7.2f}")
     cur = r["current"]
     if cur:
         print(f"\n{cur['year']} picks (entry {cur['entry_month']} -> {cur['as_of']}), universe YTD {cur['universe_ytd']*100:.0f}%:")
