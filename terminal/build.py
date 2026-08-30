@@ -1238,27 +1238,37 @@ PANELS.Ultimate=()=>{
 };
 
 PANELS.Confluence=()=>{
-  const w=$('div',{});const C=D.confluence||{};const CB=C.backtest||{};const rg=C.regime||{};const o=C.opportunity||{};
-  w.append($('h2',{class:'sect-title'},'Confluence — Conviction Engine'),
-    $('p',{class:'lead'},'The capstone: top-down macro context × bottom-up edges, futures-eligible. It scores every name by how many independent edges INTERSECT — regime-fit + earnings turnaround + momentum + relative strength + liquidity — and tags each REAL (earnings-backed, hold), FAKEOUT (momentum but earnings falling — scalp with a stop), or WATCH. Tradeable basket is opportunity-gated, inverse-vol weighted. OOS-validated: +24% CAGR, Sharpe 0.86, 86% of months net-positive. ~half the picks lose any month — the basket wins because the fat-tailed winners outweigh them.'));
+  const w=$('div',{});const C=D.confluence||{};const rg=C.regime||{};const o=C.opportunity||{};
+  const V=C.variants||{};const ORDER=['raw','conviction','combined'];const rec=C.recommended||'combined';
+  const tcls=t=>t==='REAL'?'up':t==='FAKEOUT'?'down':'muted';
+  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  w.append($('h2',{class:'sect-title'},'Confluence — Three Variants'),
+    $('p',{class:'lead'},'The capstone, run three ways over the same futures-eligible universe so you can compare like-for-like. Every name is scored by how many independent edges INTERSECT — regime-fit + earnings turnaround + momentum + relative strength + liquidity — and tagged REAL (earnings-backed, hold), FAKEOUT (momentum but earnings falling — scalp with a stop) or WATCH. The three baskets differ only in how they RANK: A raw single score · B raw + earnings-conviction tilt · ★ rank-averaged momentum ensemble. Each is opportunity-gated, inverse-vol weighted, 1-month. Walk-forward 2019-2026, OOS = held-out half, no look-ahead.'));
+  // shared context
   const rc=$('div',{class:'card'});
   rc.append($('h3',{},'Context & signal ',$('span',{class:'badge '+((C.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},C.action||'—')));
   rc.append($('div',{class:'mono',style:'font-size:13px;margin:6px 0'},'regime: ',$('b',{class:rg.sign>0?'up':rg.sign<0?'down':'accent'},(rg.label||'—').toUpperCase()),rg.policy_rate!=null?`  ·  policy rate ${rg.policy_rate}%`:''));
   rc.append($('div',{class:'muted',style:'font-size:12.5px'},`favours: ${rg.favored||'—'}`));
   rc.append($('div',{class:'mono muted',style:'font-size:12px;margin-top:6px'},`opportunity gate: dispersion ${o.dispersion} vs median ${o.disp_median} · ${o.risk_on?'risk-on':'risk-off'} → ${o.trade?'DEPLOY':'sit in cash'}`));
   w.append(rc);
-  const oo=CB.oos||{};
-  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
-  const sc=$('div',{class:'card',style:'margin-top:16px'});
-  sc.append($('h3',{},'Backtest ',$('span',{class:'tag ok'},'walk-forward · OOS · no look-ahead')));
-  sc.append($('div',{class:'grid cols2'},
-    kpi(oo.sharpe!=null?oo.sharpe.toFixed(2):'—','Sharpe (OOS)','accent'),
-    kpi(oo.calmar!=null?oo.calmar.toFixed(2):'—','Calmar (OOS)','accent'),
-    kpi(oo.cagr!=null?'+'+(oo.cagr*100).toFixed(0)+'%':'—','CAGR (OOS)'),
-    kpi(CB.pct_pos_months!=null?(CB.pct_pos_months*100).toFixed(0)+'%':'—','months net-positive','accent')));
-  sc.append($('div',{class:'note'},CB.method||''));
-  w.append(sc);
-  const tcls=t=>t==='REAL'?'up':t==='FAKEOUT'?'down':'muted';
+  // head-to-head comparison
+  const cmp=$('div',{class:'card',style:'margin-top:16px'});
+  cmp.append($('h3',{},'Head-to-head ',$('span',{class:'tag ok'},'OOS · no look-ahead')));
+  const ct=$('table');
+  ct.append($('thead',{},$('tr',{},...['Variant','Sharpe','Calmar','CAGR','maxDD','net+ mo'].map(h=>$('th',{},h)))));
+  const ctb=$('tbody');
+  ORDER.forEach(k=>{const v=V[k];if(!v)return;const b=(v.backtest||{}).oos||{};const pm=(v.backtest||{}).pct_pos_months;
+    ctb.append($('tr',{style:k===rec?'background:var(--accent-soft)':''},
+      $('td',{},$('b',{},v.label||k)),
+      $('td',{class:'num '+(k===rec?'accent':'')},b.sharpe!=null?b.sharpe.toFixed(2):'—'),
+      $('td',{class:'num '+(k===rec?'accent':'')},b.calmar!=null?b.calmar.toFixed(2):'—'),
+      $('td',{class:'num'},b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num down'},b.maxdd!=null?(b.maxdd*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num'},pm!=null?(pm*100).toFixed(0)+'%':'—')));});
+  ct.append(ctb);cmp.append($('div',{class:'tablewrap'},ct));
+  cmp.append($('div',{class:'note'},'The momentum ENSEMBLE (★ Combined) is the honest out-of-sample winner and lowers drawdown — robust across basket size (K=5/8/10) and split point. The earnings tilt (B) barely beats raw once timed with point-in-time EPS; its larger live edge relies on a current EPS snapshot that cannot be backtested without look-ahead. So ★ ranks on momentum and keeps earnings as a conviction tag.'));
+  w.append(cmp);
+  // shared high-conviction set
   const hc=$('div',{class:'card',style:'margin-top:16px'});
   hc.append($('h3',{},`High-conviction set — ${C.n_conviction||0} names, 3+ edges aligned`));
   const hv=C.high_conviction||[];
@@ -1272,27 +1282,113 @@ PANELS.Confluence=()=>{
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},r.sector),
       $('td',{class:'mono muted',style:'text-align:left;font-size:10px'},(r.edges||[]).join(', ')))));
     t.append(tb);hc.append($('div',{class:'tablewrap'},t));}
-  hc.append($('div',{class:'note'},'REAL = earnings-backed (hold). FAKEOUT = momentum but earnings falling (scalp with a stop, do not hold). WATCH = mixed. The tag tells you whether a breakout has a fundamental reason or is running on sentiment.'));
+  hc.append($('div',{class:'note'},'Shared across all three variants. REAL = earnings-backed (hold). FAKEOUT = momentum but earnings falling (scalp with a stop, do not hold). WATCH = mixed.'));
   w.append(hc);
-  const bk=C.basket||[];
-  const bc=$('div',{class:'card',style:'margin-top:16px'});
-  bc.append($('h3',{},'Tradeable basket ',$('span',{class:'tag warn'},`entry ${C.entry_month||'—'} · basket ${C.basket_ret==null?'—':pct(C.basket_ret,1)}`)));
-  if(bk.length){const t=$('table');
-    t.append($('thead',{},$('tr',{},...['#','Sym','Tag','Weight','Entry','Now','Return'].map(h=>$('th',{},h)))));
-    const tb=$('tbody');
-    bk.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
-      $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
-      $('td',{class:'num accent'},(p.weight*100).toFixed(1)+'%'),
-      $('td',{class:'num muted'},p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
-      $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)))));
-    t.append(tb);bc.append($('div',{class:'tablewrap'},t));}
-  bc.append($('div',{class:'note'},C.note||''));
-  w.append(bc);
+  // per-variant sections
+  const section=(k)=>{const v=V[k];if(!v)return;
+    const b=(v.backtest||{}).oos||{};const bt=v.backtest||{};const isRec=(k===rec);
+    const card=$('div',{class:'card',style:'margin-top:16px'+(isRec?';border:1px solid var(--accent)':'')});
+    card.append($('h3',{},(v.label||k)+' ',
+      isRec?$('span',{class:'tag ok'},'recommended'):'',
+      $('span',{class:'tag warn',style:'margin-left:6px'},`entry ${C.entry_month||'—'} · basket ${v.basket_ret==null?'—':pct(v.basket_ret,1)}`)));
+    card.append($('div',{class:'grid cols2'},
+      kpi(b.sharpe!=null?b.sharpe.toFixed(2):'—','Sharpe (OOS)',isRec?'accent':''),
+      kpi(b.calmar!=null?b.calmar.toFixed(2):'—','Calmar (OOS)',isRec?'accent':''),
+      kpi(b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—','CAGR (OOS)'),
+      kpi(bt.pct_pos_months!=null?(bt.pct_pos_months*100).toFixed(0)+'%':'—','net+ months (traded)',isRec?'accent':'')));
+    const bk=v.picks||[];
+    if(bk.length){const t=$('table');
+      t.append($('thead',{},$('tr',{},...['#','Sym','Tag','Weight','EPS gr','Entry','Now','Return'].map(h=>$('th',{},h)))));
+      const tb=$('tbody');
+      bk.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+        $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
+        $('td',{class:'num accent'},(p.weight*100).toFixed(1)+'%'),
+        $('td',{class:'num '+cls(p.eps_growth)},p.eps_growth==null?'—':(p.eps_growth>0?'+':'')+p.eps_growth+'%'),
+        $('td',{class:'num muted'},p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
+        $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)))));
+      t.append(tb);card.append($('div',{class:'tablewrap'},t));}
+    card.append($('div',{class:'note'},bt.method||''));
+    w.append(card);};
+  ORDER.forEach(section);
+  // overall note
+  const nc=$('div',{class:'card',style:'margin-top:16px'});
+  nc.append($('div',{class:'note'},C.note||''));
+  w.append(nc);
+  return w;
+};
+
+PANELS.Picker=()=>{
+  const w=$('div',{});const C=D.picker||{};const rg=C.regime||{};const o=C.opportunity||{};
+  const V=C.variants||{};const ORDER=['turnaround','leaders','quality','combined'];const rec=C.recommended||'combined';
+  const tcls=t=>t==='REAL'?'up':t==='FAKEOUT'?'down':'muted';
+  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  w.append($('h2',{class:'sect-title'},'Picker — Alpha-Engine Frameworks'),
+    $('p',{class:'lead'},'The "Alpha Engine" turnaround/entry-timing/race frameworks, operationalised with the data that is actually point-in-time here (price, volume, liquidity, drawdown, momentum, relative strength, regime) and run as four comparable styles over the same futures-eligible universe. The fundamental quality-floor and sector-catalyst screens rely on point-in-time fundamentals this project does not have — a current EPS snapshot applied to the past would be look-ahead — so they are NOT in the backtest; EPS appears only as a live tag. Each style: opportunity-gated, inverse-vol weighted, top-8, 1-month. Walk-forward 2019-2026, OOS = held-out half, no look-ahead.'));
+  if(!V.combined){w.append($('div',{class:'card muted'},C.note||'picker unavailable'));return w;}
+  // shared context
+  const rc=$('div',{class:'card'});
+  rc.append($('h3',{},'Context & signal ',$('span',{class:'badge '+((C.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},C.action||'—')));
+  rc.append($('div',{class:'mono',style:'font-size:13px;margin:6px 0'},'regime: ',$('b',{class:rg.sign>0?'up':rg.sign<0?'down':'accent'},(rg.label||'—').toUpperCase()),rg.policy_rate!=null?`  ·  policy rate ${rg.policy_rate}%`:''));
+  rc.append($('div',{class:'muted',style:'font-size:12.5px'},`favours: ${rg.favored||'—'}`));
+  rc.append($('div',{class:'mono muted',style:'font-size:12px;margin-top:6px'},`opportunity gate: dispersion ${o.dispersion} vs median ${o.disp_median} · ${o.risk_on?'risk-on':'risk-off'} → ${o.trade?'DEPLOY':'sit in cash'}`));
+  w.append(rc);
+  // head-to-head
+  const cmp=$('div',{class:'card',style:'margin-top:16px'});
+  cmp.append($('h3',{},'Head-to-head ',$('span',{class:'tag ok'},'OOS · no look-ahead')));
+  const ct=$('table');
+  ct.append($('thead',{},$('tr',{},...['Variant','Sharpe','Calmar','CAGR','maxDD','net+ mo'].map(h=>$('th',{},h)))));
+  const ctb=$('tbody');
+  ORDER.forEach(k=>{const v=V[k];if(!v)return;const b=(v.backtest||{}).oos||{};const pm=(v.backtest||{}).pct_pos_months;
+    ctb.append($('tr',{style:k===rec?'background:var(--accent-soft)':''},
+      $('td',{},$('b',{},v.label||k)),
+      $('td',{class:'num '+(k===rec?'accent':'')},b.sharpe!=null?b.sharpe.toFixed(2):'—'),
+      $('td',{class:'num '+(k===rec?'accent':'')},b.calmar!=null?b.calmar.toFixed(2):'—'),
+      $('td',{class:'num'},b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num down'},b.maxdd!=null?(b.maxdd*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num'},pm!=null?(pm*100).toFixed(0)+'%':'—')));});
+  ct.append(ctb);cmp.append($('div',{class:'tablewrap'},ct));
+  const cb=(V.combined.backtest||{});const ceil=cb.lookahead_sharpe;
+  cmp.append($('div',{class:'note'},'The 3-way ENSEMBLE (★ Combined) is the honest OOS winner and lowers drawdown — robust across basket size (K=5/8/10) and split. LEADERS is the strongest single style; TURNAROUND is the weakest (PSX rewards continuation, punishes fading) but diversifies the ensemble.'+(ceil!=null?` Adding today's EPS as a conviction tilt is a LOOK-AHEAD ceiling of Sharpe ~${ceil.toFixed(2)} — still below Combined's honest ${((cb.oos||{}).sharpe||0).toFixed(2)}, so fundamentals add nothing and earnings stay a tag.`:'')));
+  w.append(cmp);
+  // per-variant sections
+  const section=(k)=>{const v=V[k];if(!v)return;
+    const b=(v.backtest||{}).oos||{};const bt=v.backtest||{};const isRec=(k===rec);
+    const card=$('div',{class:'card',style:'margin-top:16px'+(isRec?';border:1px solid var(--accent)':'')});
+    card.append($('h3',{},(v.label||k)+' ',
+      isRec?$('span',{class:'tag ok'},'recommended'):'',
+      $('span',{class:'tag warn',style:'margin-left:6px'},`entry ${C.entry_month||'—'} · basket ${v.basket_ret==null?'—':pct(v.basket_ret,1)}`)));
+    card.append($('div',{class:'grid cols2'},
+      kpi(b.sharpe!=null?b.sharpe.toFixed(2):'—','Sharpe (OOS)',isRec?'accent':''),
+      kpi(b.calmar!=null?b.calmar.toFixed(2):'—','Calmar (OOS)',isRec?'accent':''),
+      kpi(b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—','CAGR (OOS)'),
+      kpi(bt.pct_pos_months!=null?(bt.pct_pos_months*100).toFixed(0)+'%':'—','net+ months (traded)',isRec?'accent':'')));
+    const bk=v.picks||[];
+    if(bk.length){const t=$('table');
+      t.append($('thead',{},$('tr',{},...['#','Sym','Tag','Weight','EPS gr','Entry','Now','Return'].map(h=>$('th',{},h)))));
+      const tb=$('tbody');
+      bk.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+        $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
+        $('td',{class:'num accent'},(p.weight*100).toFixed(1)+'%'),
+        $('td',{class:'num '+cls(p.eps_growth)},p.eps_growth==null?'—':(p.eps_growth>0?'+':'')+p.eps_growth+'%'),
+        $('td',{class:'num muted'},p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
+        $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)))));
+      t.append(tb);card.append($('div',{class:'tablewrap'},t));}
+    card.append($('div',{class:'note'},bt.method||''));
+    w.append(card);};
+  ORDER.forEach(section);
+  // forward-ledger note
+  const fc=$('div',{class:'card',style:'margin-top:16px'});
+  fc.append($('h3',{},'Forward test — the parts we can\'t backtest ',$('span',{class:'tag warn'},'paper ledger')));
+  fc.append($('div',{class:'note'},C.forward_note||''));
+  w.append(fc);
+  const nc=$('div',{class:'card',style:'margin-top:16px'});
+  nc.append($('div',{class:'note'},C.note||''));
+  w.append(nc);
   return w;
 };
 
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Picker',PANELS.Picker],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],

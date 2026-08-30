@@ -12,7 +12,7 @@ import pandas as pd
 
 from pakterm import config, data
 from analysis import regime, connections, events, sentiment, surges, mood, predictor, flows
-from analysis import analysis_filter, surger, catalysts, harvester, sniper, confluence
+from analysis import analysis_filter, surger, catalysts, harvester, sniper, confluence, picker
 from analysis import futures_predictor as _F
 
 
@@ -181,6 +181,7 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "ultimate": _ultimate(min_adv),                             # the beta-harvester (honest winner)
         "sniper": _sniper(min_adv),                                 # opportunity-gated convex satellite
         "confluence": _confluence(min_adv),                         # top-down x bottom-up capstone
+        "picker": _picker(min_adv),                                 # Alpha-Engine frameworks, 4 style variants
         "consensus": _consensus(strat, surg_res),                   # cross-model agreement filter
     }
     return bundle
@@ -244,6 +245,13 @@ def _confluence(min_adv):
         return confluence.live_result(min_adv)
     except Exception as e:
         return {"high_conviction": [], "basket": [], "note": f"unavailable ({type(e).__name__})"}
+
+
+def _picker(min_adv):
+    try:
+        return picker.live_result(min_adv)
+    except Exception as e:
+        return {"variants": {}, "note": f"unavailable ({type(e).__name__})"}
 
 
 def _macro_live():
