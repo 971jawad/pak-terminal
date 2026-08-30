@@ -1237,8 +1237,62 @@ PANELS.Ultimate=()=>{
   return w;
 };
 
+PANELS.Confluence=()=>{
+  const w=$('div',{});const C=D.confluence||{};const CB=C.backtest||{};const rg=C.regime||{};const o=C.opportunity||{};
+  w.append($('h2',{class:'sect-title'},'Confluence — Conviction Engine'),
+    $('p',{class:'lead'},'The capstone: top-down macro context × bottom-up edges, futures-eligible. It scores every name by how many independent edges INTERSECT — regime-fit + earnings turnaround + momentum + relative strength + liquidity — and tags each REAL (earnings-backed, hold), FAKEOUT (momentum but earnings falling — scalp with a stop), or WATCH. Tradeable basket is opportunity-gated, inverse-vol weighted. OOS-validated: +24% CAGR, Sharpe 0.86, 86% of months net-positive. ~half the picks lose any month — the basket wins because the fat-tailed winners outweigh them.'));
+  const rc=$('div',{class:'card'});
+  rc.append($('h3',{},'Context & signal ',$('span',{class:'badge '+((C.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},C.action||'—')));
+  rc.append($('div',{class:'mono',style:'font-size:13px;margin:6px 0'},'regime: ',$('b',{class:rg.sign>0?'up':rg.sign<0?'down':'accent'},(rg.label||'—').toUpperCase()),rg.policy_rate!=null?`  ·  policy rate ${rg.policy_rate}%`:''));
+  rc.append($('div',{class:'muted',style:'font-size:12.5px'},`favours: ${rg.favored||'—'}`));
+  rc.append($('div',{class:'mono muted',style:'font-size:12px;margin-top:6px'},`opportunity gate: dispersion ${o.dispersion} vs median ${o.disp_median} · ${o.risk_on?'risk-on':'risk-off'} → ${o.trade?'DEPLOY':'sit in cash'}`));
+  w.append(rc);
+  const oo=CB.oos||{};
+  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  const sc=$('div',{class:'card',style:'margin-top:16px'});
+  sc.append($('h3',{},'Backtest ',$('span',{class:'tag ok'},'walk-forward · OOS · no look-ahead')));
+  sc.append($('div',{class:'grid cols2'},
+    kpi(oo.sharpe!=null?oo.sharpe.toFixed(2):'—','Sharpe (OOS)','accent'),
+    kpi(oo.calmar!=null?oo.calmar.toFixed(2):'—','Calmar (OOS)','accent'),
+    kpi(oo.cagr!=null?'+'+(oo.cagr*100).toFixed(0)+'%':'—','CAGR (OOS)'),
+    kpi(CB.pct_pos_months!=null?(CB.pct_pos_months*100).toFixed(0)+'%':'—','months net-positive','accent')));
+  sc.append($('div',{class:'note'},CB.method||''));
+  w.append(sc);
+  const tcls=t=>t==='REAL'?'up':t==='FAKEOUT'?'down':'muted';
+  const hc=$('div',{class:'card',style:'margin-top:16px'});
+  hc.append($('h3',{},`High-conviction set — ${C.n_conviction||0} names, 3+ edges aligned`));
+  const hv=C.high_conviction||[];
+  if(hv.length){const t=$('table');
+    t.append($('thead',{},$('tr',{},...['Symbol','Tag','Edges','EPS gr','Sector','Aligned'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    hv.forEach(r=>tb.append($('tr',{style:r.tag==='REAL'?'background:var(--accent-soft)':''},
+      $('td',{},$('b',{},r.symbol)),$('td',{},$('span',{class:tcls(r.tag)},r.tag)),
+      $('td',{class:'num accent'},r.confluence),
+      $('td',{class:'num '+cls(r.eps_growth)},r.eps_growth==null?'—':(r.eps_growth>0?'+':'')+r.eps_growth+'%'),
+      $('td',{class:'muted',style:'text-align:left;font-size:11px'},r.sector),
+      $('td',{class:'mono muted',style:'text-align:left;font-size:10px'},(r.edges||[]).join(', ')))));
+    t.append(tb);hc.append($('div',{class:'tablewrap'},t));}
+  hc.append($('div',{class:'note'},'REAL = earnings-backed (hold). FAKEOUT = momentum but earnings falling (scalp with a stop, do not hold). WATCH = mixed. The tag tells you whether a breakout has a fundamental reason or is running on sentiment.'));
+  w.append(hc);
+  const bk=C.basket||[];
+  const bc=$('div',{class:'card',style:'margin-top:16px'});
+  bc.append($('h3',{},'Tradeable basket ',$('span',{class:'tag warn'},`entry ${C.entry_month||'—'} · basket ${C.basket_ret==null?'—':pct(C.basket_ret,1)}`)));
+  if(bk.length){const t=$('table');
+    t.append($('thead',{},$('tr',{},...['#','Sym','Tag','Weight','Entry','Now','Return'].map(h=>$('th',{},h)))));
+    const tb=$('tbody');
+    bk.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+      $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
+      $('td',{class:'num accent'},(p.weight*100).toFixed(1)+'%'),
+      $('td',{class:'num muted'},p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
+      $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)))));
+    t.append(tb);bc.append($('div',{class:'tablewrap'},t));}
+  bc.append($('div',{class:'note'},C.note||''));
+  w.append(bc);
+  return w;
+};
+
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],

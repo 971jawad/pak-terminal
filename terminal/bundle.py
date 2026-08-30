@@ -12,7 +12,7 @@ import pandas as pd
 
 from pakterm import config, data
 from analysis import regime, connections, events, sentiment, surges, mood, predictor, flows
-from analysis import analysis_filter, surger, catalysts, harvester, sniper
+from analysis import analysis_filter, surger, catalysts, harvester, sniper, confluence
 from analysis import futures_predictor as _F
 
 
@@ -180,6 +180,7 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "macro_live": _macro_live(),                                # weekly-refreshed macro+news
         "ultimate": _ultimate(min_adv),                             # the beta-harvester (honest winner)
         "sniper": _sniper(min_adv),                                 # opportunity-gated convex satellite
+        "confluence": _confluence(min_adv),                         # top-down x bottom-up capstone
         "consensus": _consensus(strat, surg_res),                   # cross-model agreement filter
     }
     return bundle
@@ -236,6 +237,13 @@ def _sniper(min_adv):
         return sniper.live_result(min_adv)
     except Exception as e:
         return {"picks": [], "note": f"unavailable ({type(e).__name__})"}
+
+
+def _confluence(min_adv):
+    try:
+        return confluence.live_result(min_adv)
+    except Exception as e:
+        return {"high_conviction": [], "basket": [], "note": f"unavailable ({type(e).__name__})"}
 
 
 def _macro_live():
