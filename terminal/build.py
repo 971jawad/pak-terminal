@@ -1498,15 +1498,18 @@ PANELS.Valuator=()=>{
   if(secs.length){const sc=$('div',{class:'card',style:'margin-top:16px'});
     sc.append($('h3',{},'Sector catalyst — hottest sectors now'));
     const st=$('table');
-    st.append($('thead',{},$('tr',{},...['Sector','#','3m mom','6m mom','vol growth','Hot'].map(h=>$('th',{},h)))));
+    st.append($('thead',{},$('tr',{},...['Sector','3m mom','ADV med','Kind','Driving stocks','Hot'].map(h=>$('th',{},h)))));
     const stb=$('tbody');
-    secs.forEach(s=>stb.append($('tr',{style:s.hot?'background:var(--accent-soft)':''},
-      $('td',{},$('b',{},s.sector)),$('td',{class:'num muted'},s.n),
-      $('td',{class:'num '+cls(s.mom3)},pct(s.mom3,0)),$('td',{class:'num '+cls(s.mom6)},pct(s.mom6,0)),
-      $('td',{class:'num '+cls(s.advg)},(s.advg>0?'+':'')+s.advg.toFixed(2)),
-      $('td',{},s.hot?$('span',{class:'up'},'● HOT'):$('span',{class:'muted'},'—')))));
+    secs.forEach(s=>{const drv=(s.drivers||[]).map(d=>d.symbol+' '+(d.mom3*100).toFixed(0)+'%').join(', ');
+      stb.append($('tr',{style:s.hot?'background:var(--accent-soft)':''},
+        $('td',{},$('b',{},s.sector)),
+        $('td',{class:'num '+cls(s.mom3)},pct(s.mom3,0)),
+        $('td',{class:'num '+((s.adv_median_mn||0)>=30?'':'down')},s.adv_median_mn!=null?s.adv_median_mn.toFixed(0)+'mn':'—'),
+        $('td',{},s.hot?$('span',{class:s.kind==='broad'?'up':'down'},s.kind==='broad'?'✓ broad/real':'⚠ thin/pump'):$('span',{class:'muted'},'—')),
+        $('td',{class:'muted',style:'text-align:left;font-size:10.5px'},drv||'—'),
+        $('td',{},s.hot?$('span',{class:'up'},'● HOT'):$('span',{class:'muted'},'—'))));});
     st.append(stb);sc.append($('div',{class:'tablewrap'},st));
-    sc.append($('div',{class:'note'},'Sectors ranked by median 3-month momentum + volume growth. HOT = strong move on rising volume. It detects the surge once price/volume confirm it (e.g. the refinery run) — it does not predict the policy/crack-spread cause beforehand, which no price data can.'));
+    sc.append($('div',{class:'note'},'Sectors ranked by median 3-month momentum + volume growth, with the honest catch: a couple of thin parabolic small-caps can drag a whole sector "HOT". So each hot sector is split — ✓ BROAD/REAL (the move is carried by liquid, volume-backed names across the sector, ADV median ≥30mn: e.g. Refinery, PRL/CNERGY/NRL on ~1,600mn/day = a genuine sector catalyst) vs ⚠ THIN/PUMP (dragged up by 1-2 thin small-caps: e.g. Textile Spinning on ASTM alone). It detects the move once price/volume confirm it — it cannot name the policy/SRO cause, because government-policy catalysts live in news (the macro-news feed is currently empty and needs fixing), not in the price/announcement data.'));
     w.append(sc);}
   // surge radar
   const rd=C.radar||{};const mv=rd.movers||[];

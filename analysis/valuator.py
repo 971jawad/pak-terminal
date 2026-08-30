@@ -189,9 +189,18 @@ def _sectors(panel, min_adv):
     sec = sec[sec.n >= 3].sort_values("mom3", ascending=False)
     out = []
     for _, r in sec.head(8).iterrows():
+        names = liq[liq.sector_name == r.sector_name]
+        up = names[names.mom_3m > 0.10].sort_values("mom_3m", ascending=False)
+        adv_med = float(up.adv_20.median()) / 1e6 if len(up) else 0.0
+        # BROAD/REAL = the move is carried by liquid, volume-backed names across the
+        # sector; THIN/PUMP = dragged hot by a few thin, parabolic small-caps (ASTM-type).
+        broad = bool(len(up) >= 3 and adv_med >= 30.0)
+        drivers = [{"symbol": d.symbol, "mom3": round(float(d.mom_3m), 2),
+                    "adv_mn": round(float(d.adv_20) / 1e6, 0)} for _, d in up.head(3).iterrows()]
         out.append({"sector": r.sector_name, "n": int(r.n),
                     "mom3": round(float(r.mom3), 3), "mom6": round(float(r.mom6), 3),
-                    "advg": round(float(r.advg), 3),
+                    "advg": round(float(r.advg), 3), "adv_median_mn": round(adv_med, 0),
+                    "kind": "broad" if broad else "thin", "drivers": drivers,
                     "hot": bool(r.mom3 >= 0.20 and r.advg > 0)})
     return out
 
