@@ -1318,65 +1318,75 @@ PANELS.Confluence=()=>{
 };
 
 PANELS.Picker=()=>{
-  const w=$('div',{});const C=D.picker||{};const rg=C.regime||{};const o=C.opportunity||{};
-  const V=C.variants||{};const ORDER=['turnaround','leaders','quality','combined'];const rec=C.recommended||'combined';
-  const tcls=t=>t==='REAL'?'up':t==='FAKEOUT'?'down':'muted';
-  const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
-  w.append($('h2',{class:'sect-title'},'Picker — Alpha-Engine Frameworks'),
-    $('p',{class:'lead'},'The "Alpha Engine" turnaround/entry-timing/race frameworks, operationalised with the data that is actually point-in-time here (price, volume, liquidity, drawdown, momentum, relative strength, regime) and run as four comparable styles over the same futures-eligible universe. The fundamental quality-floor and sector-catalyst screens rely on point-in-time fundamentals this project does not have — a current EPS snapshot applied to the past would be look-ahead — so they are NOT in the backtest; EPS appears only as a live tag. Each style: opportunity-gated, inverse-vol weighted, top-8, 1-month. Walk-forward 2019-2026, OOS = held-out half, no look-ahead.'));
-  if(!V.combined){w.append($('div',{class:'card muted'},C.note||'picker unavailable'));return w;}
-  // shared context
-  const rc=$('div',{class:'card'});
-  rc.append($('h3',{},'Context & signal ',$('span',{class:'badge '+((C.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},C.action||'—')));
-  rc.append($('div',{class:'mono',style:'font-size:13px;margin:6px 0'},'regime: ',$('b',{class:rg.sign>0?'up':rg.sign<0?'down':'accent'},(rg.label||'—').toUpperCase()),rg.policy_rate!=null?`  ·  policy rate ${rg.policy_rate}%`:''));
-  rc.append($('div',{class:'muted',style:'font-size:12.5px'},`favours: ${rg.favored||'—'}`));
-  rc.append($('div',{class:'mono muted',style:'font-size:12px;margin-top:6px'},`opportunity gate: dispersion ${o.dispersion} vs median ${o.disp_median} · ${o.risk_on?'risk-on':'risk-off'} → ${o.trade?'DEPLOY':'sit in cash'}`));
-  w.append(rc);
-  // head-to-head
-  const cmp=$('div',{class:'card',style:'margin-top:16px'});
-  cmp.append($('h3',{},'Head-to-head ',$('span',{class:'tag ok'},'OOS · no look-ahead')));
+  const w=$('div',{});const C=D.picker||{};const S=C.summary||{};const cur=C.current||null;
+  const ORDER=['turnaround','leaders','quality','combined'];const rec=C.recommended||'combined';
+  const LAB={turnaround:'A · Turnaround',leaders:'B · Leaders',quality:'C · Mom-quality',combined:'★ Combined'};
+  const tcls=t=>t==='REAL'?'up':t==='FADING'?'down':'muted';
+  w.append($('h2',{class:'sect-title'},'Picker — Year-End Race'),
+    $('p',{class:'lead'},'Which names surge most over a CALENDAR YEAR — picked once at the start of the year on prior-year data only, held to Dec 31, and tested year-by-year (the honest way to judge a "top surger of the year" model). Full liquid universe, top-15 equal-weight (upside, not risk-parity). Three framework styles — Turnaround (beaten-down, bouncing), Leaders (momentum + rel-strength), Mom-quality (low-vol quality-momentum) — plus a rank-averaged Combined. Honest result below: no style reliably beats owning the whole liquid universe; the winning style rotates with the regime; and top-decile hit-rate ≈ the 10% base rate, so this is a diversified, regime-aware candidate list, NOT a single-surger sniper.'));
+  if(!C.annual||!C.annual.length){w.append($('div',{class:'card muted'},C.note||'picker unavailable'));return w;}
+  // summary head-to-head
+  const cmp=$('div',{class:'card'});
+  cmp.append($('h3',{},'Year-by-year summary ',$('span',{class:'tag ok'},`${S.n_years||0} years · no look-ahead`)));
   const ct=$('table');
-  ct.append($('thead',{},$('tr',{},...['Variant','Sharpe','Calmar','CAGR','maxDD','net+ mo'].map(h=>$('th',{},h)))));
+  ct.append($('thead',{},$('tr',{},...['Style','Mean annual','Compounded','Beat universe','Top-decile hit'].map(h=>$('th',{},h)))));
   const ctb=$('tbody');
-  ORDER.forEach(k=>{const v=V[k];if(!v)return;const b=(v.backtest||{}).oos||{};const pm=(v.backtest||{}).pct_pos_months;
-    ctb.append($('tr',{style:k===rec?'background:var(--accent-soft)':''},
-      $('td',{},$('b',{},v.label||k)),
-      $('td',{class:'num '+(k===rec?'accent':'')},b.sharpe!=null?b.sharpe.toFixed(2):'—'),
-      $('td',{class:'num '+(k===rec?'accent':'')},b.calmar!=null?b.calmar.toFixed(2):'—'),
-      $('td',{class:'num'},b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—'),
-      $('td',{class:'num down'},b.maxdd!=null?(b.maxdd*100).toFixed(0)+'%':'—'),
-      $('td',{class:'num'},pm!=null?(pm*100).toFixed(0)+'%':'—')));});
+  ctb.append($('tr',{style:'border-bottom:2px solid var(--border)'},$('td',{},$('b',{},'Universe (equal-wt)')),
+    $('td',{class:'num'},S.univ_mean!=null?pct(S.univ_mean,0):'—'),
+    $('td',{class:'num'},S.univ_comp!=null?S.univ_comp.toFixed(1)+'x':'—'),
+    $('td',{class:'num muted'},'—'),$('td',{class:'num muted'},'10%')));
+  ORDER.forEach(k=>{const v=S[k]||{};const isRec=(k===rec);
+    ctb.append($('tr',{style:isRec?'background:var(--accent-soft)':''},
+      $('td',{},$('b',{},LAB[k])),
+      $('td',{class:'num '+(isRec?'accent':'')},v.mean!=null?pct(v.mean,0):'—'),
+      $('td',{class:'num '+(isRec?'accent':'')},v.comp!=null?v.comp.toFixed(1)+'x':'—'),
+      $('td',{class:'num'},v.beat_rate!=null?(v.beat_rate*100).toFixed(0)+'% of yrs':'—'),
+      $('td',{class:'num '+(v.hit_rate>0.10?'up':'muted')},v.hit_rate!=null?(v.hit_rate*100).toFixed(0)+'%':'—')));});
   ct.append(ctb);cmp.append($('div',{class:'tablewrap'},ct));
-  const cb=(V.combined.backtest||{});const ceil=cb.lookahead_sharpe;
-  cmp.append($('div',{class:'note'},'The 3-way ENSEMBLE (★ Combined) is the honest OOS winner and lowers drawdown — robust across basket size (K=5/8/10) and split. LEADERS is the strongest single style; TURNAROUND is the weakest (PSX rewards continuation, punishes fading) but diversifies the ensemble.'+(ceil!=null?` Adding today's EPS as a conviction tilt is a LOOK-AHEAD ceiling of Sharpe ~${ceil.toFixed(2)} — still below Combined's honest ${((cb.oos||{}).sharpe||0).toFixed(2)}, so fundamentals add nothing and earnings stay a tag.`:'')));
+  cmp.append($('div',{class:'note'},'Compounded = growth of an annually-rebalanced top-15 over the test window. Beat-universe = share of years the style beat the equal-weight liquid universe. Top-decile hit = share of the 15 picks that landed in that year\'s top-10% surgers (10% = pure chance). None of the styles clears the universe convincingly, and hit-rate sits at chance — the edge over just owning the market is small and regime-dependent.'));
   w.append(cmp);
-  // per-variant sections
-  const section=(k)=>{const v=V[k];if(!v)return;
-    const b=(v.backtest||{}).oos||{};const bt=v.backtest||{};const isRec=(k===rec);
-    const card=$('div',{class:'card',style:'margin-top:16px'+(isRec?';border:1px solid var(--accent)':'')});
-    card.append($('h3',{},(v.label||k)+' ',
-      isRec?$('span',{class:'tag ok'},'recommended'):'',
-      $('span',{class:'tag warn',style:'margin-left:6px'},`entry ${C.entry_month||'—'} · basket ${v.basket_ret==null?'—':pct(v.basket_ret,1)}`)));
-    card.append($('div',{class:'grid cols2'},
-      kpi(b.sharpe!=null?b.sharpe.toFixed(2):'—','Sharpe (OOS)',isRec?'accent':''),
-      kpi(b.calmar!=null?b.calmar.toFixed(2):'—','Calmar (OOS)',isRec?'accent':''),
-      kpi(b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—','CAGR (OOS)'),
-      kpi(bt.pct_pos_months!=null?(bt.pct_pos_months*100).toFixed(0)+'%':'—','net+ months (traded)',isRec?'accent':'')));
-    const bk=v.picks||[];
-    if(bk.length){const t=$('table');
-      t.append($('thead',{},$('tr',{},...['#','Sym','Tag','Weight','EPS gr','Entry','Now','Return'].map(h=>$('th',{},h)))));
-      const tb=$('tbody');
-      bk.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
-        $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
-        $('td',{class:'num accent'},(p.weight*100).toFixed(1)+'%'),
-        $('td',{class:'num '+cls(p.eps_growth)},p.eps_growth==null?'—':(p.eps_growth>0?'+':'')+p.eps_growth+'%'),
-        $('td',{class:'num muted'},p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
-        $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)))));
-      t.append(tb);card.append($('div',{class:'tablewrap'},t));}
-    card.append($('div',{class:'note'},bt.method||''));
-    w.append(card);};
-  ORDER.forEach(section);
-  // forward-ledger note
+  // annual table
+  const ac=$('div',{class:'card',style:'margin-top:16px'});
+  ac.append($('h3',{},'Full-year return of the top-15, by year'));
+  const at=$('table');
+  at.append($('thead',{},$('tr',{},...['Year','Universe','Turn','Lead','Qual','Comb','Winner'].map(h=>$('th',{},h)))));
+  const atb=$('tbody');
+  const short={turnaround:'Turn',leaders:'Lead',quality:'Qual',combined:'Comb'};
+  C.annual.forEach(r=>{
+    const cell=k=>$('td',{class:'num '+(k===r.winner?'up':cls(r[k]))+(k===r.winner?' accent':'')},r[k]!=null?pct(r[k],0):'—');
+    atb.append($('tr',{},$('td',{class:'num muted'},r.year),
+      $('td',{class:'num '+cls(r.univ)},r.univ!=null?pct(r.univ,0):'—'),
+      cell('turnaround'),cell('leaders'),cell('quality'),cell('combined'),
+      $('td',{class:'accent',style:'text-align:left;font-size:11px'},short[r.winner]||r.winner)));});
+  at.append(atb);ac.append($('div',{class:'tablewrap'},at));
+  ac.append($('div',{class:'note'},'The winner rotates: Turnaround leads recovery/choppy years, Mom-quality loses least in down years, Leaders/Combined win strong bulls. No single style is best every year — matching the style to the regime is the only real lever.'));
+  w.append(ac);
+  // this year's live picks
+  if(cur&&cur.variants){
+    const hc=$('div',{class:'card',style:'margin-top:16px'});
+    hc.append($('h3',{},`${cur.year} picks — entry ${cur.entry_month}, held to ${cur.as_of} `,
+      $('span',{class:'tag warn'},`universe YTD ${cur.universe_ytd==null?'—':pct(cur.universe_ytd,0)}`)));
+    hc.append($('div',{class:'note'},'This year\'s actual start-of-year picks (chosen on Dec data, no hindsight) marked to today. A live, honest read — not a backtest. In a down/choppy year the Turnaround style tends to hold up best; in a strong bull the momentum styles lead.'));
+    w.append(hc);
+    ORDER.forEach(k=>{const v=cur.variants[k];if(!v)return;const isRec=(k===rec);
+      const card=$('div',{class:'card',style:'margin-top:12px'+(isRec?';border:1px solid var(--accent)':'')});
+      card.append($('h3',{},(v.label||LAB[k])+' ',
+        isRec?$('span',{class:'tag ok'},'all-weather pick'):'',
+        $('span',{class:'tag warn',style:'margin-left:6px'},`basket YTD ${v.basket_ytd==null?'—':pct(v.basket_ytd,0)}`)));
+      const bk=v.picks||[];
+      if(bk.length){const t=$('table');
+        t.append($('thead',{},$('tr',{},...['#','Sym','Sector','EPS tag','Entry','Now','YTD'].map(h=>$('th',{},h)))));
+        const tb=$('tbody');
+        bk.forEach(p=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+          $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+          $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
+          $('td',{class:'num muted'},p.entry_close==null?'—':p.entry_close),
+          $('td',{class:'num'},p.last_close==null?'—':p.last_close),
+          $('td',{class:'num '+cls(p.ytd)},p.ytd==null?'—':pct(p.ytd,1)))));
+        t.append(tb);card.append($('div',{class:'tablewrap'},t));}
+      w.append(card);});
+  }
+  // forward + overall notes
   const fc=$('div',{class:'card',style:'margin-top:16px'});
   fc.append($('h3',{},'Forward test — the parts we can\'t backtest ',$('span',{class:'tag warn'},'paper ledger')));
   fc.append($('div',{class:'note'},C.forward_note||''));
