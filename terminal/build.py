@@ -1445,24 +1445,45 @@ PANELS.Valuator=()=>{
   // raw vs gated backtest
   const gc=$('div',{class:'card',style:'margin-top:16px'});
   gc.append($('h3',{},'Timing the picks — raw vs regime-gated ',$('span',{class:'tag ok'},'walk-forward · PIT')));
+  gc.append($('div',{class:'muted',style:'font-size:12px;margin:-6px 0 8px'},'CAGR / Sharpe / maxDD / Calmar are for the REGIME-GATED version (buy each Jan, hold, exposure timed by the gate). Raw = same basket held ungated, for contrast.'));
   const gt=$('table');
-  gt.append($('thead',{},$('tr',{},$('th',{},'Basket'),$('th',{colspan:'2'},'Sharpe'),$('th',{colspan:'2'},'maxDD'),$('th',{colspan:'2'},'Calmar'))));
-  gt.append($('thead',{},$('tr',{},$('th',{},''),$('th',{},'raw'),$('th',{},'gated'),$('th',{},'raw'),$('th',{},'gated'),$('th',{},'raw'),$('th',{},'gated'))));
-  const KEYS=[['univ','Universe (equal-wt)'],['turnaround','Turnaround'],['leaders','Leaders'],['quality','Mom-quality'],['combined','Combined']];
+  gt.append($('thead',{},$('tr',{},...['Basket','CAGR','Vol','Sharpe (raw→gated)','maxDD','Calmar'].map(h=>$('th',{},h)))));
+  const KEYS=[['univ','Universe (equal-wt)'],['turnaround','Turnaround'],['leaders','Leaders'],['quality','Mom-quality'],['combined','Combined'],['dna','★ Pre-surge DNA']];
   const gtb=$('tbody');
-  KEYS.forEach(([k,lab])=>{const a=RAW[k]||{},b=GAT[k]||{};if(a.sharpe==null&&b.sharpe==null)return;
-    gtb.append($('tr',{style:k==='univ'?'background:var(--accent-soft)':''},
+  KEYS.forEach(([k,lab])=>{const a=RAW[k]||{},b=GAT[k]||{};if(a.sharpe==null&&b.sharpe==null)return;const hl=(k==='univ'||k==='dna');
+    gtb.append($('tr',{style:k==='dna'?'background:var(--accent-soft);border-top:2px solid var(--accent)':(k==='univ'?'border-bottom:2px solid var(--border)':'')},
       $('td',{},$('b',{},lab)),
-      $('td',{class:'num muted'},a.sharpe!=null?a.sharpe.toFixed(2):'—'),
-      $('td',{class:'num '+(b.sharpe>=0.5?'up':'')},b.sharpe!=null?b.sharpe.toFixed(2):'—'),
-      $('td',{class:'num muted'},a.maxdd!=null?(a.maxdd*100).toFixed(0)+'%':'—'),
-      $('td',{class:'num'},b.maxdd!=null?(b.maxdd*100).toFixed(0)+'%':'—'),
-      $('td',{class:'num muted'},a.calmar!=null?a.calmar.toFixed(2):'—'),
+      $('td',{class:'num'},b.cagr!=null?'+'+(b.cagr*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num muted'},b.vol!=null?(b.vol*100).toFixed(0)+'%':'—'),
+      $('td',{class:'num'},$('span',{class:'muted'},(a.sharpe!=null?a.sharpe.toFixed(2):'—')+' → '),$('span',{class:(b.sharpe>=0.7?'up':'')},b.sharpe!=null?b.sharpe.toFixed(2):'—')),
+      $('td',{class:'num down'},b.maxdd!=null?(b.maxdd*100).toFixed(0)+'%':'—'),
       $('td',{class:'num '+(b.calmar>=1?'up':'')},b.calmar!=null?b.calmar.toFixed(2):'—')));});
   gt.append(gtb);gc.append($('div',{class:'tablewrap'},gt));
-  const su=SP.univ||{},scb=SP.combined||{};
-  gc.append($('div',{class:'note'},'The gate roughly doubles Sharpe (≈0.25 → 0.5-0.68) and cuts maxDD from ~-50% to ~-11-18%. Humbling truth: the gated UNIVERSE is about as good as any selection style — here, TIMING beats stock-picking. Train/test (gated): universe Sharpe '+((su.train||{}).sharpe??'—')+' → '+((su.test||{}).sharpe??'—')+', combined '+((scb.train||{}).sharpe??'—')+' → '+((scb.test||{}).sharpe??'—')+' — the gate helps drawdown in both halves; Sharpe is regime-sensitive on a 6-year sample (honest small-sample caveat).'));
+  const su=SP.univ||{},sdn=SP.dna||{};
+  gc.append($('div',{class:'note'},'The gate roughly doubles Sharpe (≈0.25 → 0.7-1.0) and cuts maxDD from ~-50% to ~-11-14%. Best combo = ★ Pre-surge DNA (cheap + volume-awakening + liquidity-awakening) GATED: the DNA selection lifts return, the gate cuts the drawdown. Train/test (gated Sharpe): universe '+((su.train||{}).sharpe??'—')+' → '+((su.test||{}).sharpe??'—')+', DNA '+((sdn.train||{}).sharpe??'—')+' → '+((sdn.test||{}).sharpe??'—')+' — positive both halves. Honest caveats: 6-year sample; the DNA edge concentrates in bull years and underperforms in bears (the gate rescues that); ~1.6x OOS surge-lift, not a strong edge.'));
   w.append(gc);
+  // DNA annual returns + live picks
+  const DA=G.annual_dna||[],DU=G.annual_univ||[],DL=C.dna_live||null;
+  if(DA.length){const dc=$('div',{class:'card',style:'margin-top:16px'});
+    dc.append($('h3',{},'★ Pre-surge DNA — annual returns & this year\'s basket ',$('span',{class:'tag ok'},'validated tilt')));
+    const uMap={};DU.forEach(([y,v])=>uMap[y]=v);
+    const dt=$('table');dt.append($('thead',{},$('tr',{},...['Year','DNA basket','Universe','Edge'].map(h=>$('th',{},h)))));
+    const dtb=$('tbody');
+    DA.forEach(([y,v])=>{const u=uMap[y];dtb.append($('tr',{},$('td',{class:'num muted'},y),
+      $('td',{class:'num '+cls(v)},v==null?'—':pct(v,0)),$('td',{class:'num '+cls(u)},u==null?'—':pct(u,0)),
+      $('td',{class:'num '+((v!=null&&u!=null&&v>u)?'up':'down')},(v!=null&&u!=null)?((v-u>=0?'+':'')+((v-u)*100).toFixed(0)+'%'):'—')));});
+    dt.append(dtb);dc.append($('div',{class:'tablewrap'},dt));
+    if(DL&&DL.picks&&DL.picks.length){
+      dc.append($('div',{class:'note',style:'margin-bottom:6px'},`${DL.year} DNA basket (entry ${DL.entry_month}) — basket YTD ${DL.basket_ytd==null?'—':pct(DL.basket_ytd,0)}. Forward, no hindsight:`));
+      const pt=$('table');pt.append($('thead',{},$('tr',{},...['#','Sym','Sector','Entry','Now','YTD'].map(h=>$('th',{},h)))));
+      const ptb=$('tbody');
+      DL.picks.forEach(p=>ptb.append($('tr',{},$('td',{class:'num muted'},p.rank),$('td',{},$('b',{},p.symbol)),
+        $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+        $('td',{class:'num muted'},p.entry_close==null?'—':p.entry_close),$('td',{class:'num'},p.last_close==null?'—':p.last_close),
+        $('td',{class:'num '+cls(p.ytd)},p.ytd==null?'—':pct(p.ytd,1)))));
+      pt.append(ptb);dc.append($('div',{class:'tablewrap'},pt));}
+    dc.append($('div',{class:'note'},'The DNA basket beat the liquid universe in 4 of 6 years (mean +6%/yr, 3.2x vs 2.7x compounded), with the edge in bull years (2024 +31%, 2025 +14%) and a drag in the 2022 bear — cheap/volatile names crash harder, which is exactly why you run it GATED. This is the honest payoff of stacking the validated pre-surge footprints; it is a basket tilt, not a way to snipe the single top surger.'));
+    w.append(dc);}
   // catchability meta note
   const mt=C.meta||{};
   if(mt.note){const mm=$('div',{class:'card',style:'margin-top:16px'});

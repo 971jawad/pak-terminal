@@ -57,6 +57,24 @@ def _macro_expo(mac, ym):
         return 1.0
 
 
+def _dna_names(mp, piv, entry, k=K):
+    """Pre-surge DNA basket at entry: cheap (low nominal price) + volume-awakening
+    (adv_growth) + liquidity-awakening (Amihud falling vs 3m ago). OOS-validated tilt
+    toward >=100% moves (weak, regime-dependent). PIT — all inputs known at entry."""
+    e3 = entry - 3
+    g = mp[(mp.ym == entry) & mp.liq].copy(); g = g[g.symbol.isin(piv.columns)]
+    if len(g) < 20:
+        return []
+    prior = mp[mp.ym == e3][["symbol", "amihud"]].rename(columns={"amihud": "amihud0"})
+    g = g.merge(prior, on="symbol", how="left")
+    med = g.amihud.median()
+    cheap = pd.Series(-g.close.values).rank(pct=True).values
+    volwake = pd.Series(g.adv_growth.fillna(0).values).rank(pct=True).values
+    liqwake = pd.Series(-(np.log1p(g.amihud.fillna(med)) - np.log1p(g.amihud0.fillna(med))).values).rank(pct=True).values
+    g = g.assign(dna=(cheap + volwake + liqwake) / 3.0)
+    return list(g.nlargest(k, "dna").symbol)
+
+
 def _stats(r, rf=RF):
     r = pd.Series(r).dropna()
     if len(r) < 6:
@@ -77,9 +95,11 @@ def _gate_backtest(mp, piv, mac, sig):
     idx = {m: i for i, m in enumerate(months)}
     years = sorted({p.year for p in months})
     date_of = mp.groupby("ym")["date"].max()
-    held = {v: {} for v in PK.VARIANTS}
+    STYLES = list(PK.VARIANTS) + ["dna"]
+    held = {v: {} for v in STYLES}
+    annual = {v: [] for v in STYLES}; annual["univ"] = []
     for Y in years:
-        entry = pd.Period(f"{Y-1}-12", "M")
+        entry, ex = pd.Period(f"{Y-1}-12", "M"), pd.Period(f"{Y}-12", "M")
         if entry not in idx:
             continue
         g = mp[(mp.ym == entry) & mp.liq].copy(); g = g[g.symbol.isin(piv.columns)]
@@ -87,6 +107,13 @@ def _gate_backtest(mp, piv, mac, sig):
             continue
         for v in PK.VARIANTS:
             held[v][Y] = list(g.assign(_s=PK._score(v, g)).nlargest(K, "_s").symbol)
+        held["dna"][Y] = _dna_names(mp, piv, entry, K)
+        if ex in idx:                                   # full-year returns for the annual table
+            yr = (piv.loc[ex] / piv.loc[entry] - 1.0)
+            annual["univ"].append([Y, round(float(g.symbol.map(yr).dropna().mean()), 4)])
+            for v in STYLES:
+                nm = held[v][Y]
+                annual[v].append([Y, round(float(pd.Series([yr.get(s, np.nan) for s in nm]).dropna().mean()), 4) if nm else None])
     liq_by = {ym: list(set(mp[(mp.ym == ym) & mp.liq].symbol) & set(piv.columns)) for ym in months}
     cash = RF / 12
 
@@ -97,11 +124,11 @@ def _gate_backtest(mp, piv, mac, sig):
         r = r.replace([np.inf, -np.inf], np.nan).dropna()
         return float(r.mean()) if len(r) else np.nan
 
-    keys = ["univ"] + list(PK.VARIANTS)
+    keys = ["univ"] + STYLES
     raw = {k: [] for k in keys}; gat = {k: [] for k in keys}; gidx = []
     for i in range(1, len(months)):
         m, pm = months[i], months[i - 1]
-        if not any(m.year in held[v] for v in PK.VARIANTS):
+        if not any(m.year in held[v] for v in STYLES):
             continue
         gidx.append(m)
         expo = float(sig.asof(date_of[pm])) if pm in date_of.index and len(sig) else 1.0
@@ -111,12 +138,12 @@ def _gate_backtest(mp, piv, mac, sig):
             b = mret(held[k].get(m.year, []) if k != "univ" else liq_by.get(pm, []), m, pm)
             raw[k].append(b)
             gat[k].append(np.nan if b is None or not np.isfinite(b) else e * b + (1 - e) * cash)
-    out = {"raw": {k: _stats(raw[k]) for k in keys}, "gated": {k: _stats(gat[k]) for k in keys}}
-    # train/test on the gated universe + combined (robustness, not a fluke of one window)
+    out = {"raw": {k: _stats(raw[k]) for k in keys}, "gated": {k: _stats(gat[k]) for k in keys},
+           "annual_dna": annual["dna"], "annual_univ": annual["univ"]}
     h = len(gidx) // 2
     out["split"] = {
         "univ": {"train": _stats(gat["univ"][:h]), "test": _stats(gat["univ"][h:])},
-        "combined": {"train": _stats(gat["combined"][:h]), "test": _stats(gat["combined"][h:])},
+        "dna": {"train": _stats(gat["dna"][:h]), "test": _stats(gat["dna"][h:])},
     }
     return out
 
@@ -220,6 +247,31 @@ def _radar(panel, fu, min_adv, k=15):
             "has_announcements": bool(ann)}
 
 
+def _dna_live(mp, piv, fu, min_adv, k=K):
+    """Current-year pre-surge DNA basket (entry = last Dec) marked to today (YTD)."""
+    cur_year = piv.index.max().year
+    entry = pd.Period(f"{cur_year-1}-12", "M")
+    if entry not in set(piv.index):
+        return None
+    names = _dna_names(mp, piv, entry, k)
+    if not names:
+        return None
+    lastc = piv.iloc[-1]; ec = piv.loc[entry]
+    picks = []
+    for i, s in enumerate(names, 1):
+        a, b = float(ec.get(s, np.nan)), float(lastc.get(s, np.nan))
+        eg = (fu.get(s, {}) or {}).get("eps_growth_yoy")
+        sec = mp[(mp.symbol == s) & (mp.ym == entry)]["sector_name"]
+        picks.append({"rank": i, "symbol": s, "sector": str(sec.iloc[0]) if len(sec) else "",
+                      "entry_close": None if not np.isfinite(a) else round(a, 2),
+                      "last_close": None if not np.isfinite(b) else round(b, 2),
+                      "ytd": None if not (np.isfinite(a) and np.isfinite(b) and a) else round(b / a - 1, 4),
+                      "tag": PK._tag(eg)})
+    rr = [p["ytd"] for p in picks if p["ytd"] is not None]
+    return {"year": cur_year, "entry_month": str(entry),
+            "basket_ytd": round(float(np.mean(rr)), 4) if rr else None, "picks": picks}
+
+
 def live_result(min_adv: float = config.MIN_ADV) -> dict:
     panel = F.feature_panel(min_adv)
     mp = panel.groupby(["symbol", "ym"]).last().reset_index()
@@ -232,6 +284,7 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
         "sectors": _sectors(panel, min_adv),
         "radar": _radar(panel, PK._fund(), min_adv),
         "gate": _gate_backtest(mp, piv, mac, sig),
+        "dna_live": _dna_live(mp, piv, PK._fund(), min_adv),
         "meta": {
             "avg_tradeable": 2.0, "avg_caught15": 0.3, "avg_caught50": 0.5,
             "note": ("Meta-analysis of catchability: of each year's TOP-10 full-universe surgers "
