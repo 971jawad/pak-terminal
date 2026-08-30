@@ -1512,19 +1512,22 @@ PANELS.Valuator=()=>{
   const rd=C.radar||{};const mv=rd.movers||[];
   if(mv.length){const rc=$('div',{class:'card',style:'margin-top:16px'});
     rc.append($('h3',{},'Surge radar — emerging movers ',$('span',{class:'tag warn'},`scanned ${rd.n_scanned||'—'} · ${rd.as_of||''}`)));
+    const qcls=q=>q==='BREAKOUT'?'up':q==='PUMP-RISK'?'down':'muted';
+    const qlab=q=>q==='BREAKOUT'?'✓ breakout':q==='PUMP-RISK'?'⚠ pump-risk':'~ mixed';
     const rt=$('table');
-    rt.append($('thead',{},$('tr',{},...['Sym','Sector','1m','3m','vol','EPS','Likely driver (PSX announcement)'].map(h=>$('th',{},h)))));
+    rt.append($('thead',{},$('tr',{},...['Sym','Quality','1m','ADV mn','vol','Ext','EPS','Likely driver (PSX announcement)'].map(h=>$('th',{},h)))));
     const rtb=$('tbody');
     mv.forEach(p=>{const a=p.catalyst;
-      rtb.append($('tr',{},$('td',{},$('b',{},p.symbol)),
-        $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
+      rtb.append($('tr',{style:p.quality==='PUMP-RISK'?'opacity:.72':''},$('td',{},$('b',{},p.symbol)),
+        $('td',{},$('span',{class:qcls(p.quality)},qlab(p.quality))),
         $('td',{class:'num '+cls(p.mom_1m)},pct(p.mom_1m,0)),
-        $('td',{class:'num '+cls(p.mom_3m)},pct(p.mom_3m,0)),
+        $('td',{class:'num '+(p.adv_mn>=15?'':'down')},p.adv_mn!=null?p.adv_mn.toFixed(0):'—'),
         $('td',{class:'num accent'},'+'+p.adv_growth.toFixed(1)),
+        $('td',{class:'num muted'},p.dist_252h!=null?(p.dist_252h*100).toFixed(0)+'%':'—'),
         $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
         $('td',{style:'text-align:left;font-size:11px'},a?$('span',{},$('b',{class:'accent'},a.type+' '),a.title+' ('+a.date+')'):$('span',{class:'muted'},'—'))));});
     rt.append(rtb);rc.append($('div',{class:'tablewrap'},rt));
-    rc.append($('div',{class:'note'},'Every build, scans the full liquid universe for names where a move is STARTING with volume confirmation (short-term momentum + acceleration + volume surge), then attaches the most recent material PSX announcement as the likely driver.'+(rd.has_announcements?'':' (Announcement feed unavailable this build — showing price/volume only.)')+' This is the honest "constantly find what drives surges" mechanism: it catches the move as it confirms and names the cause — it cannot predict the catalyst before the market moves.'));
+    rc.append($('div',{class:'note'},'Scans the full liquid universe every build for names where a move is STARTING (short-term momentum + volume surge), classifies each as ✓ BREAKOUT (real expanding volume, genuine liquidity, not parabolic) vs ⚠ PUMP-RISK (thin ADV + parabolic limit-up spikes + moved-on-little-volume + pinned at all-time-high — the KPUS/BUXL signature that round-trips) vs ~ mixed, and attaches the latest PSX announcement.'+(rd.has_announcements?'':' (Announcement feed unavailable this build.)')+' ADV = avg daily traded value (PKR mn); low ADV + parabolic = the pump tell. It flags the move as it confirms and separates real breakouts from manipulations — it cannot predict a catalyst before the market moves.'));
     w.append(rc);}
   const nc=$('div',{class:'card',style:'margin-top:16px'});
   nc.append($('div',{class:'note'},C.note||''));

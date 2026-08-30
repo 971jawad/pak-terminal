@@ -229,6 +229,12 @@ def _radar(panel, fu, min_adv, k=15):
              + 1.2 * PK._z(g.adv_growth.fillna(0)).values + 0.6 * PK._z(g.rev_1w.fillna(0)).values
              + 0.4 * PK._z(-g.dist_252h.fillna(-1)).values)
     g = g.assign(_s=score)
+    # cross-sectional percentiles for the breakout-vs-pump microstructure read
+    def pct(col, inv=False):
+        v = g[col].fillna(g[col].median()); r = v.rank(pct=True)
+        return (1 - r) if inv else r
+    g = g.assign(_maxup_p=pct("maxup_1m"), _vol_p=pct("vol_1m"), _amihud_p=pct("amihud"),
+                 _adv_p=pct("adv_20"))
     # emerging = actually moving up AND volume expanding (not already parabolic)
     em = g[(g.mom_1m > 0.05) & (g.adv_growth > 0.3)].nlargest(k, "_s")
     ann = _announcements()
@@ -236,10 +242,22 @@ def _radar(panel, fu, min_adv, k=15):
     for _, r in em.iterrows():
         eg = (fu.get(r.symbol, {}) or {}).get("eps_growth_yoy")
         a = ann.get(r.symbol)
+        # PUMP-RISK signature: thin liquidity + parabolic limit-up spikes + moved-on-no-volume
+        # + extreme extension. BREAKOUT: real expanding volume + genuine liquidity, not parabolic.
+        pump = 0
+        pump += 1 if r.adv_20 < 3 * min_adv else 0                 # barely liquid = pumpable
+        pump += 1 if r._maxup_p > 0.80 else 0                      # limit-up / parabolic single days
+        pump += 1 if r._amihud_p > 0.70 else 0                     # price moved on little real volume
+        pump += 1 if (r.dist_252h or -1) > -0.03 else 0            # pinned at all-time high (extended)
+        pump += 1 if r._vol_p > 0.85 else 0                        # extreme volatility
+        vol_backed = (r.adv_growth or 0) > 0.5 and r.adv_20 > 3 * min_adv and r._maxup_p < 0.80
+        quality = "BREAKOUT" if (vol_backed and pump <= 1) else ("PUMP-RISK" if pump >= 3 else "MIXED")
         movers.append({"symbol": r.symbol, "sector": r.sector_name,
                        "mom_1m": round(float(r.mom_1m or 0), 3), "mom_3m": round(float(r.mom_3m or 0), 3),
                        "adv_growth": round(float(r.adv_growth or 0), 2),
+                       "adv_mn": round(float(r.adv_20 or 0) / 1e6, 1),
                        "dist_252h": round(float(r.dist_252h or 0), 3),
+                       "quality": quality, "pump_score": int(pump),
                        "eps_growth": eg, "tag": PK._tag(eg),
                        "catalyst": a})
     return {"as_of": str(cur.date.max().date()), "n_scanned": int(len(g)),
