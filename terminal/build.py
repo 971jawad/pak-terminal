@@ -1509,7 +1509,16 @@ PANELS.Valuator=()=>{
         $('td',{class:'muted',style:'text-align:left;font-size:10.5px'},drv||'—'),
         $('td',{},s.hot?$('span',{class:'up'},'● HOT'):$('span',{class:'muted'},'—'))));});
     st.append(stb);sc.append($('div',{class:'tablewrap'},st));
-    sc.append($('div',{class:'note'},'Sectors ranked by median 3-month momentum + volume growth, with the honest catch: a couple of thin parabolic small-caps can drag a whole sector "HOT". So each hot sector is split — ✓ BROAD/REAL (the move is carried by liquid, volume-backed names across the sector, ADV median ≥30mn: e.g. Refinery, PRL/CNERGY/NRL on ~1,600mn/day = a genuine sector catalyst) vs ⚠ THIN/PUMP (dragged up by 1-2 thin small-caps: e.g. Textile Spinning on ASTM alone). It detects the move once price/volume confirm it — it cannot name the policy/SRO cause, because government-policy catalysts live in news (the macro-news feed is currently empty and needs fixing), not in the price/announcement data.'));
+    // likely policy/news driver per hot sector (from the macro-news feed)
+    const withNews=secs.filter(s=>s.hot&&(s.news||[]).length);
+    if(withNews.length){const nb=$('div',{style:'margin-top:10px'});
+      nb.append($('div',{class:'muted',style:'font-size:12px;font-weight:600;margin-bottom:4px'},'Likely drivers (recent policy / macro headlines):'));
+      withNews.forEach(s=>{const box=$('div',{style:'font-size:12px;margin:3px 0'});
+        box.append($('span',{class:s.kind==='broad'?'up':'down'},'● '),$('b',{},s.sector+': '));
+        box.append($('span',{class:'muted'},(s.news||[]).join('  ·  ')));
+        nb.append(box);});
+      sc.append(nb);}
+    sc.append($('div',{class:'note'},'Sectors ranked by median 3-month momentum + volume growth, with the honest catch: a couple of thin parabolic small-caps can drag a whole sector "HOT". So each hot sector is split — ✓ BROAD/REAL (the move is carried by liquid, volume-backed names across the sector, ADV median ≥30mn: e.g. Refinery, PRL/CNERGY/NRL on ~1,600mn/day = a genuine sector catalyst) vs ⚠ THIN/PUMP (dragged up by 1-2 thin small-caps: e.g. Textile Spinning on ASTM alone). It detects the move once price/volume confirm it, then cross-references the daily macro/policy news feed to name the LIKELY DRIVER (e.g. Refinery ← the CPEC Falcon Oils refinery + strategic-fuel-reserves headlines). Government-policy catalysts live in news, so this is best-effort keyword matching, not proof of causation — a thin/pump sector often has no real driver (only tangential matches or none).'));
     w.append(sc);}
   // surge radar
   const rd=C.radar||{};const mv=rd.movers||[];

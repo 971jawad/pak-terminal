@@ -20,6 +20,8 @@ selection here. Not investment advice.
 """
 from __future__ import annotations
 
+import json
+import re
 import warnings
 
 import numpy as np
@@ -177,7 +179,44 @@ def _mcd(mac, sig):
     }
 
 
-def _sectors(panel, min_adv):
+SECTOR_KW = {
+    "refiner": r"refiner|crude|fuel|petroleum|\bOMC\b|hormuz|energy-sec",
+    "oil & gas": r"\boil\b|\bgas\b|petroleum|\bLNG\b|\bRLNG\b|crude|exploration|hormuz",
+    "modaraba": r"modaraba|leasing|microfinance|\bdebt\b",
+    "cement": r"cement|construction|\bCPEC\b|infrastructure",
+    "textile": r"textile|spinning|cotton|apparel|\byarn\b",
+    "bank": r"\bbank|\bSBP\b|policy rate|interest rate|monetary|deposit",
+    "power": r"power|electricity|\bRLNG\b|load-shedding|hydropower|\bIPP\b|circular debt",
+    "fertili": r"fertili|\burea\b|\bDAP\b",
+    "auto": r"\bauto|vehicle|\bcar\b|\bEV\b",
+    "pharma": r"pharma|\bdrug|deregulat",
+    "sugar": r"sugar|\bcane\b",
+    "chemical": r"chemical|polymer|\bPTA\b",
+    "technology": r"\bIT\b|software|tech|digiti",
+}
+
+
+def _load_headlines():
+    try:
+        h = json.loads((config.MACRO_DIR / "headlines.json").read_text(encoding="utf-8"))
+        return h.get("headlines", []) if isinstance(h, dict) else (h or [])
+    except Exception:
+        return []
+
+
+def _sector_news(sector_name, headlines):
+    """Cross-reference: which recent macro/policy headlines plausibly drive this sector."""
+    if not headlines:
+        return []
+    sl = (sector_name or "").lower()
+    pats = [pat for key, pat in SECTOR_KW.items() if key in sl]
+    if not pats:
+        return []
+    rx = re.compile("|".join(pats), re.I)
+    return [h for h in headlines if rx.search(h)][:2]
+
+
+def _sectors(panel, min_adv, headlines=None):
     """Sector-catalyst detector: rank sectors by recent momentum + volume growth
     (price/volume only, PIT). Flags a sector HOT once its move is confirmed — it
     detects the surge, not the SRO/policy cause beforehand (that needs data we lack)."""
@@ -201,6 +240,7 @@ def _sectors(panel, min_adv):
                     "mom3": round(float(r.mom3), 3), "mom6": round(float(r.mom6), 3),
                     "advg": round(float(r.advg), 3), "adv_median_mn": round(adv_med, 0),
                     "kind": "broad" if broad else "thin", "drivers": drivers,
+                    "news": _sector_news(r.sector_name, headlines or []),
                     "hot": bool(r.mom3 >= 0.20 and r.advg > 0)})
     return out
 
@@ -306,9 +346,10 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     piv = mp.pivot(index="ym", columns="symbol", values="close").sort_index()
     mac = data.load_macro_monthly(); mac.index = mac.index.to_period("M")
     sig = ensemble_signal(data.market_index(min_adv))
+    headlines = _load_headlines()
     return {
         "mcd": _mcd(mac, sig),
-        "sectors": _sectors(panel, min_adv),
+        "sectors": _sectors(panel, min_adv, headlines),
         "radar": _radar(panel, PK._fund(), min_adv),
         "gate": _gate_backtest(mp, piv, mac, sig),
         "dna_live": _dna_live(mp, piv, PK._fund(), min_adv),

@@ -53,7 +53,11 @@ def world_bank() -> dict:
 
 KEY = re.compile(r"inflation|policy rate|interest rate|\bSBP\b|monetary|rupee|dollar|IMF|budget|"
                  r"\bGDP\b|current account|remittance|reserves?|deficit|tariff|oil price|"
-                 r"circular debt|fiscal|T-bill|bond|geopolit|Iran|India|Afghan|sanction", re.I)
+                 r"circular debt|fiscal|T-bill|bond|geopolit|Iran|India|Afghan|sanction|"
+                 # sector-policy catalysts (SRO / deregulation / sector-specific)
+                 r"\bSRO\b|deregulat|refiner|petroleum|\bOMC\b|fuel|crude|\bLNG\b|\bgas\b|"
+                 r"cement|fertili[sz]er|textile|spinning|\bauto\b|vehicle|pharma|\bbank\b|"
+                 r"modaraba|leasing|power|tariff|duty|subsidy|import|export|policy", re.I)
 
 
 def _titles_from(html: str) -> list[str]:

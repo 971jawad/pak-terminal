@@ -27,6 +27,19 @@ def main():
                 "from analysis import strategy as S; "
                 "open('data/strategy_result.json','w',encoding='utf-8').write(json.dumps(S.build_result(),default=str)); "
                 "print('strategy_result.json refreshed')"])
+    # refresh macro/policy HEADLINES daily (guarded: keep last good file if the scrape
+    # fails or returns nothing, so the news feed + sector-catalyst cross-ref stay current)
+    try:
+        subprocess.run([PY, "-c",
+            "import sys,json; sys.path.insert(0,'.'); from datetime import date; "
+            "from scripts.refresh_macro import headlines as H; hl=H(); "
+            "open('data/macro/headlines.json','w',encoding='utf-8').write(json.dumps("
+            "{'as_of':date.today().isoformat(),'source':'profit.pakistantoday.com.pk','headlines':hl})) "
+            "if hl else print('no headlines scraped, keeping existing'); "
+            "print(f'headlines refreshed: {len(hl)}')"],
+            cwd=str(ROOT), check=False, timeout=120)
+    except Exception as e:
+        print(f"headlines refresh skipped: {type(e).__name__}")
     run(["-m", "terminal.bundle"])
     run(["-m", "terminal.build"])
     (ROOT / "docs").mkdir(exist_ok=True)
