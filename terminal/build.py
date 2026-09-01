@@ -631,38 +631,48 @@ PANELS.Strategy=()=>{
     // completed-month ALL-STRATEGIES comparison (final, exit-anchored) — so the ML
     // 1m/2m/3m results for the month that just ended are not lost on the roll
     const cpl=(cl.predictor||{}).by_horizon||{};
-    const crows=[['Market (buy&hold / timing baseline)',cl.market],['Gated momentum top-5 (locked-in)',cl.applied_ret]];
-    ['1','2','3'].forEach(H=>{const d=cpl[H];if(d)crows.push([`ML futures predictor ${H}m`,d.basket_ret]);});
-    if(crows.some(([,v])=>v!=null)){
-      cc.append($('h3',{style:'margin-top:14px'},'All strategies — FINAL for the completed month'));
-      const cmax=Math.max(...crows.map(([,v])=>Math.abs(v||0)),0.05);
-      crows.forEach(([lab,v])=>cc.append($('div',{style:'display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;margin:4px 0'},
-        $('div',{style:lab.includes('Market')?'color:var(--muted)':'font-weight:600'},lab),
-        barRow(v||0,cmax,(v||0)>0?'var(--up)':'var(--down)'),
-        $('div',{class:'num '+cls(v)},pct(v,1)))));
+    const crows=[{lab:'Market (buy&hold / timing baseline)',v:cl.market,sub:`${cl.entry_month||''} → ${cl.exit_month||''}`},
+                 {lab:'Gated momentum top-5 (locked-in)',v:cl.applied_ret,sub:`${cl.entry_month||''} → ${cl.exit_month||''}`}];
+    ['1','2','3'].forEach(H=>{const d=cpl[H];if(d)crows.push({lab:`ML futures predictor ${H}m`,v:d.basket_ret,sub:`${d.entry_month||''} → ${d.exit_month||''} · full ${H}mo hold`});});
+    if(crows.some(r=>r.v!=null)){
+      cc.append($('h3',{style:'margin-top:14px'},'All strategies — FINAL, holds completed this month'));
+      const cmax=Math.max(...crows.map(r=>Math.abs(r.v||0)),0.05);
+      crows.forEach(r=>cc.append($('div',{style:'display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;margin:6px 0'},
+        $('div',{},$('div',{style:r.lab.includes('Market')?'color:var(--muted)':'font-weight:600'},r.lab),
+          r.sub?$('div',{class:'muted',style:'font-size:10.5px'},r.sub):null),
+        barRow(r.v||0,cmax,(r.v||0)>0?'var(--up)':'var(--down)'),
+        $('div',{class:'num '+cls(r.v)},pct(r.v,1)))));
       ['1','2','3'].forEach(H=>{const d=cpl[H];if(!d||!(d.legs||[]).length)return;
         cc.append($('div',{class:'chipwrap',style:'margin-top:8px'},$('span',{class:'mono muted',style:'font-size:11px;align-self:center'},`ML ${H}m: `),
           ...d.legs.map(l=>$('span',{class:'pill',style:`background:var(--panel2);color:${(l.ret||0)>=0?'var(--up)':'var(--down)'}`},`${l.symbol} `,$('span',{class:'muted'},l.entry),` ${l.ret==null?'':pct(l.ret,0)}`))));});
     }
-    cc.append($('div',{class:'note'},'This is the CLOSED, exit-anchored result of the month that just ended (entry-month picks held to month-end) — for every strategy, not just the gated basket. It stops being marked once the month closes, so it no longer drifts, and is kept here because the live blocks above roll on the last session of each month. Still n=1 and fat-tailed — do not extrapolate.'));
+    cc.append($('div',{class:'note'},'Only strategies whose hold COMPLETED at this month-end appear — the gated basket and ML 1m re-pick monthly, so they close every month; the ML 2m/3m complete every 2/3 months and show up here only in the month they mature (2m next month, 3m the month after). Exit-anchored, so a completed result no longer drifts. Still n=1 and fat-tailed — do not extrapolate.'));
     w.append(cc);
   }
-  // this-month live comparison across ALL pick strategies
+  // live comparison across ALL pick strategies — each ML horizon on its OWN clock:
+  // 1m refreshes monthly, 2m every 2 months, 3m every 3 — so a longer-horizon
+  // basket stays HELD (mid-horizon, partial mark) instead of re-picking each month.
   const pl=S.predictor_live||{}, mk=S.market_live;
   const mc=$('div',{class:'card',style:'margin-top:16px'});
-  mc.append($('h3',{},'This month — live, all strategies ',$('span',{class:'tag warn'},`entry ${lv.entry_date||'—'} → ${lv.as_of||S.as_of||''}`)));
-  const rows=[['Market (buy&hold / timing baseline)',mk],['Gated momentum top-5 (locked-in)',lv.basket_ret]];
-  ['1','2','3'].forEach(H=>{const d=(pl.by_horizon||{})[H];if(d)rows.push([`ML futures predictor ${H}m`,d.basket_ret]);});
-  const maxv=Math.max(...rows.map(([,v])=>Math.abs(v||0)),0.05);
-  rows.forEach(([lab,v])=>mc.append($('div',{style:'display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;margin:4px 0'},
-    $('div',{style:lab.includes('Market')?'color:var(--muted)':'font-weight:600'},lab),
-    barRow(v||0,maxv,(v||0)>0?'var(--up)':'var(--down)'),
-    $('div',{class:'num '+cls(v)},pct(v,1)))));
-  // ML predictor picks per horizon (tickers)
+  mc.append($('h3',{},'Live — all strategies, each on its own horizon ',$('span',{class:'tag warn'},`through ${pl.as_of||S.as_of||''}`)));
+  // rows: {lab, v, sub?} — ML rows carry their own hold window since they no longer share one
+  const rows=[{lab:'Market (buy&hold / timing baseline)',v:mk,sub:`this month · from ${lv.entry_date||'—'}`},
+              {lab:'Gated momentum top-5 (locked-in)',v:lv.basket_ret,sub:`this month · ${lv.days_held||0}d`}];
+  ['1','2','3'].forEach(H=>{const d=(pl.by_horizon||{})[H];if(!d)return;
+    const held=d.rolled_today?`just entered ${d.entry_date||''}`:`held since ${d.entry_date||''} → matures ${d.matures_month||''} · ${d.days_held||0}d of ${H}mo`;
+    rows.push({lab:`ML futures predictor ${H}m`,v:d.rolled_today?null:d.basket_ret,sub:held});});
+  const maxv=Math.max(...rows.map(r=>Math.abs(r.v||0)),0.05);
+  rows.forEach(r=>mc.append($('div',{style:'display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;margin:6px 0'},
+    $('div',{},$('div',{style:r.lab.includes('Market')?'color:var(--muted)':'font-weight:600'},r.lab),
+      r.sub?$('div',{class:'muted',style:'font-size:10.5px'},r.sub):null),
+    barRow(r.v||0,maxv,(r.v||0)>0?'var(--up)':'var(--down)'),
+    $('div',{class:'num '+cls(r.v)},r.v==null?'—':pct(r.v,1)))));
+  // ML predictor picks per horizon (tickers) — labelled with the hold window
   ['1','2','3'].forEach(H=>{const d=(pl.by_horizon||{})[H];if(!d||!d.legs.length)return;
-    mc.append($('div',{class:'chipwrap',style:'margin-top:8px'},$('span',{class:'mono muted',style:'font-size:11px;align-self:center'},`ML ${H}m: `),
+    mc.append($('div',{class:'chipwrap',style:'margin-top:8px'},
+      $('span',{class:'mono muted',style:'font-size:11px;align-self:center'},`ML ${H}m ${d.rolled_today?'(new)':'(held since '+(d.entry_month||'')+')'}: `),
       ...d.legs.map(l=>$('span',{class:'pill',style:`background:var(--panel2);color:${(l.ret||0)>=0?'var(--up)':'var(--down)'}`},`${l.symbol} `,$('span',{class:'muted'},l.entry),` ${l.ret==null?'':pct(l.ret,0)}`))));});
-  mc.append($('div',{class:'note'},'ONE partial period (n=1, ~2.5 weeks), and the market rebounded — every strategy is riding beta + the good tail (moonshots showed up). The pick strategies beating the market here is the mirror image of the months they lose. Do not extrapolate.'));
+  mc.append($('div',{class:'note'},'Each horizon refreshes only after ITS hold completes — the 2m and 3m baskets are the picks entered at their last refresh, still being held mid-horizon (partial mark), not re-picked this month. Only the 1m re-picks monthly. These are partial, n=1, and the market rebounded — every strategy is riding beta + the good tail. Do not extrapolate.'));
   w.append(mc);
   w.append($('div',{class:'card',style:'margin-top:16px;border-left:3px solid var(--down)'},
     $('h3',{},'Do not fool yourself'),

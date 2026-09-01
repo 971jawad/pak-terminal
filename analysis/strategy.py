@@ -145,83 +145,108 @@ def backtest(min_adv: float = F.MIN_ADV) -> dict:
     return out
 
 
-def predictor_live(entry_ym, min_adv: float = F.MIN_ADV) -> dict:
-    """The ML futures-predictor's top-5 per horizon, made at end of `entry_ym`,
-    marked to the latest close — so the OTHER strategies' this-month performance
-    is visible alongside the gated-momentum one."""
-    panel = F.feature_panel(min_adv)
-    p = panel[panel.eligible].copy()
-    entry_p = pd.Period(entry_ym, "M")
-    df = data.load_prices(); last = df.date.max()
-    if p[p.ym == entry_p].empty:
-        return {"by_horizon": {}}
-    entry_date = p[p.ym == entry_p].date.max()
-    fresh = bool(last == entry_date)          # rolled today: nothing elapsed -> None, not 0.0%
-    cuml = df.set_index(["symbol", "date"])["cumlog"]
-    out = {}
-    for H in F.HORIZONS:
-        train = p[p.ym <= (entry_p - H)].dropna(subset=[f"fwd_{H}"])
-        cur = p[p.ym == entry_p]
-        if len(train) < 200 or len(cur) < F.TOPK:
-            out[str(H)] = {"legs": [], "basket_ret": None}
-            continue
-        m = F._reg(); m.fit(train[F.FEATURES].to_numpy(np.float32), train[f"fwd_{H}"].to_numpy())
-        cur = cur.assign(score=m.predict(cur[F.FEATURES].to_numpy(np.float32)))
-        legs = []
-        for _, r in cur.nlargest(F.TOPK, "score").iterrows():
-            if fresh:
-                ret = None
-            else:
-                try:
-                    ret = float(np.expm1(cuml.loc[(r.symbol, last)] - cuml.loc[(r.symbol, entry_date)]))
-                except KeyError:
-                    ret = None
-            legs.append({"symbol": r.symbol, "sector": r.sector_name,
-                         "entry": round(float(r.close), 2),
-                         "ret": None if ret is None else round(ret, 3)})
-        rr = [l["ret"] for l in legs if l["ret"] is not None]
-        out[str(H)] = {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None,
-                       "rolled_today": fresh}
-    return {"entry_date": str(entry_date.date()), "as_of": str(last.date()), "by_horizon": out}
+def _horizon_entry(last_full: pd.Period, H: int) -> pd.Period:
+    """Most recent month <= last_full on horizon H's refresh grid.
+
+    A horizon-H pick is entered once and HELD for H months, so it must refresh
+    every H months — not every month like the 1m. The grid is anchored to
+    January: entry months are those with (month-1) % H == 0. Because 12 % H == 0
+    for H in {1,2,3,4,6}, the grid never skips across a year boundary (H=3 ->
+    Jan/Apr/Jul/Oct, and Oct->Jan is exactly 3 months). H=1 -> every month."""
+    m = last_full
+    while (m.month - 1) % H != 0:
+        m = m - 1
+    return m
 
 
-def predictor_closed(entry_ym, exit_ym, min_adv: float = F.MIN_ADV) -> dict:
-    """FINAL ML-predictor result: top-5 per horizon made at entry_ym month-end,
-    marked to exit_ym month-end (exit-anchored) — kept so the completed month's
-    ML result is not lost when the live predictor rolls."""
-    panel = F.feature_panel(min_adv)
-    p = panel[panel.eligible].copy()
-    entry_p = pd.Period(entry_ym, "M")
-    df = data.load_prices()
-    ex = df[df.date.dt.to_period("M") == pd.Period(exit_ym, "M")]["date"]
-    if p[p.ym == entry_p].empty or ex.empty:
-        return {"by_horizon": {}}
-    exit_d = ex.max()
-    entry_date = p[p.ym == entry_p].date.max()
-    if exit_d <= entry_date:
-        return {"by_horizon": {}}
-    cuml = df.set_index(["symbol", "date"])["cumlog"]
-    out = {}
-    for H in F.HORIZONS:
-        train = p[p.ym <= (entry_p - H)].dropna(subset=[f"fwd_{H}"])
-        cur = p[p.ym == entry_p]
-        if len(train) < 200 or len(cur) < F.TOPK:
-            out[str(H)] = {"legs": [], "basket_ret": None}
-            continue
-        m = F._reg(); m.fit(train[F.FEATURES].to_numpy(np.float32), train[f"fwd_{H}"].to_numpy())
-        cur = cur.assign(score=m.predict(cur[F.FEATURES].to_numpy(np.float32)))
-        legs = []
-        for _, r in cur.nlargest(F.TOPK, "score").iterrows():
+def _ml_basket(p, cuml, entry_p: pd.Period, H: int, entry_date, exit_date, mark: bool) -> dict:
+    """Train horizon H on ALL data up to entry_p-H (no lookahead), pick the top-K
+    from entry_p's cross-section, and — if `mark` — value the basket from
+    entry_date to exit_date. Shared by live and closed, so a horizon that
+    refreshes always recomputes fresh picks from the latest available data."""
+    train = p[p.ym <= (entry_p - H)].dropna(subset=[f"fwd_{H}"])
+    cur = p[p.ym == entry_p]
+    if len(train) < 200 or len(cur) < F.TOPK:
+        return {"legs": [], "basket_ret": None}
+    m = F._reg(); m.fit(train[F.FEATURES].to_numpy(np.float32), train[f"fwd_{H}"].to_numpy())
+    cur = cur.assign(score=m.predict(cur[F.FEATURES].to_numpy(np.float32)))
+    legs = []
+    for _, r in cur.nlargest(F.TOPK, "score").iterrows():
+        ret = None
+        if mark:
             try:
-                ret = float(np.expm1(cuml.loc[(r.symbol, exit_d)] - cuml.loc[(r.symbol, entry_date)]))
+                ret = float(np.expm1(cuml.loc[(r.symbol, exit_date)] - cuml.loc[(r.symbol, entry_date)]))
             except KeyError:
                 ret = None
-            legs.append({"symbol": r.symbol, "sector": r.sector_name,
-                         "entry": round(float(r.close), 2),
-                         "ret": None if ret is None else round(ret, 3)})
-        rr = [l["ret"] for l in legs if l["ret"] is not None]
-        out[str(H)] = {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None}
-    return {"by_horizon": out, "entry_date": str(entry_date.date()), "exit_date": str(exit_d.date())}
+        legs.append({"symbol": r.symbol, "sector": r.sector_name,
+                     "entry": round(float(r.close), 2),
+                     "ret": None if ret is None else round(ret, 3)})
+    rr = [l["ret"] for l in legs if l["ret"] is not None]
+    return {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None}
+
+
+def predictor_live(last_full, min_adv: float = F.MIN_ADV) -> dict:
+    """ML futures-predictor top-5 per horizon, each marked to the latest close.
+
+    Each horizon refreshes on ITS OWN cadence — 1m monthly, 2m every 2 months, 3m
+    every 3 months — via _horizon_entry, so a 2m/3m basket is HELD through its
+    horizon instead of being wrongly re-picked every month. Its return is measured
+    from its own entry date (partial, mid-horizon) to now."""
+    panel = F.feature_panel(min_adv)
+    p = panel[panel.eligible].copy()
+    df = data.load_prices(); last = df.date.max()
+    cuml = df.set_index(["symbol", "date"])["cumlog"]
+    lf = pd.Period(last_full, "M")
+    out = {}
+    for H in F.HORIZONS:
+        entry_p = _horizon_entry(lf, H)
+        cur = p[p.ym == entry_p]
+        if cur.empty:
+            out[str(H)] = {"legs": [], "basket_ret": None}
+            continue
+        entry_date = cur.date.max()
+        fresh = bool(last == entry_date)      # rolled today: nothing elapsed -> None, not 0.0%
+        b = _ml_basket(p, cuml, entry_p, H, entry_date, last, mark=not fresh)
+        b.update({"entry_month": str(entry_p), "entry_date": str(entry_date.date()),
+                  "matures_month": str(entry_p + H), "days_held": int((last - entry_date).days),
+                  "rolled_today": fresh})
+        out[str(H)] = b
+    return {"as_of": str(last.date()), "by_horizon": out}
+
+
+def predictor_closed(last_full, min_adv: float = F.MIN_ADV) -> dict:
+    """FINAL result of every horizon whose hold JUST completed at last_full.
+
+    A horizon H completes only when last_full is on H's refresh grid — i.e. a pick
+    entered last_full-H matured exactly at last_full's month-end. So at an August
+    close only the 1m completes (Jul->Aug); the 2m completes at Sep (Jul->Sep),
+    the 3m at Oct (Jul->Oct). Exit-anchored, kept so a completed horizon's result
+    is not lost the instant the live basket rolls."""
+    panel = F.feature_panel(min_adv)
+    p = panel[panel.eligible].copy()
+    df = data.load_prices()
+    lf = pd.Period(last_full, "M")
+    ex = df[df.date.dt.to_period("M") == lf]["date"]
+    if ex.empty:
+        return {"by_horizon": {}}
+    exit_d = ex.max()
+    cuml = df.set_index(["symbol", "date"])["cumlog"]
+    out = {}
+    for H in F.HORIZONS:
+        if _horizon_entry(lf, H) != lf:       # last_full is not a refresh month for H -> nothing completed
+            continue
+        entry_p = lf - H
+        cur = p[p.ym == entry_p]
+        if cur.empty:
+            continue
+        entry_date = cur.date.max()
+        if exit_d <= entry_date:
+            continue
+        b = _ml_basket(p, cuml, entry_p, H, entry_date, exit_d, mark=True)
+        b.update({"entry_month": str(entry_p), "entry_date": str(entry_date.date()),
+                  "exit_month": str(lf), "exit_date": str(exit_d.date())})
+        out[str(H)] = b
+    return {"by_horizon": out, "exit_date": str(exit_d.date())}
 
 
 def build_result(min_adv: float = F.MIN_ADV) -> dict:
@@ -248,7 +273,7 @@ def build_result(min_adv: float = F.MIN_ADV) -> dict:
     if prev:
         last_closed = closed_performance(prev[-1], last_full, min_adv)
         if last_closed:
-            last_closed["predictor"] = predictor_closed(prev[-1], last_full, min_adv)
+            last_closed["predictor"] = predictor_closed(last_full, min_adv)
             ed = pd.Timestamp(last_closed["entry_date"]); xd = pd.Timestamp(last_closed["exit_date"])
             if ed in loglvl.index and xd in loglvl.index:
                 last_closed["market"] = round(float(np.expm1(loglvl.loc[xd] - loglvl.loc[ed])), 4)
