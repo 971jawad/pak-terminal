@@ -185,6 +185,45 @@ def predictor_live(entry_ym, min_adv: float = F.MIN_ADV) -> dict:
     return {"entry_date": str(entry_date.date()), "as_of": str(last.date()), "by_horizon": out}
 
 
+def predictor_closed(entry_ym, exit_ym, min_adv: float = F.MIN_ADV) -> dict:
+    """FINAL ML-predictor result: top-5 per horizon made at entry_ym month-end,
+    marked to exit_ym month-end (exit-anchored) — kept so the completed month's
+    ML result is not lost when the live predictor rolls."""
+    panel = F.feature_panel(min_adv)
+    p = panel[panel.eligible].copy()
+    entry_p = pd.Period(entry_ym, "M")
+    df = data.load_prices()
+    ex = df[df.date.dt.to_period("M") == pd.Period(exit_ym, "M")]["date"]
+    if p[p.ym == entry_p].empty or ex.empty:
+        return {"by_horizon": {}}
+    exit_d = ex.max()
+    entry_date = p[p.ym == entry_p].date.max()
+    if exit_d <= entry_date:
+        return {"by_horizon": {}}
+    cuml = df.set_index(["symbol", "date"])["cumlog"]
+    out = {}
+    for H in F.HORIZONS:
+        train = p[p.ym <= (entry_p - H)].dropna(subset=[f"fwd_{H}"])
+        cur = p[p.ym == entry_p]
+        if len(train) < 200 or len(cur) < F.TOPK:
+            out[str(H)] = {"legs": [], "basket_ret": None}
+            continue
+        m = F._reg(); m.fit(train[F.FEATURES].to_numpy(np.float32), train[f"fwd_{H}"].to_numpy())
+        cur = cur.assign(score=m.predict(cur[F.FEATURES].to_numpy(np.float32)))
+        legs = []
+        for _, r in cur.nlargest(F.TOPK, "score").iterrows():
+            try:
+                ret = float(np.expm1(cuml.loc[(r.symbol, exit_d)] - cuml.loc[(r.symbol, entry_date)]))
+            except KeyError:
+                ret = None
+            legs.append({"symbol": r.symbol, "sector": r.sector_name,
+                         "entry": round(float(r.close), 2),
+                         "ret": None if ret is None else round(ret, 3)})
+        rr = [l["ret"] for l in legs if l["ret"] is not None]
+        out[str(H)] = {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None}
+    return {"by_horizon": out, "entry_date": str(entry_date.date()), "exit_date": str(exit_d.date())}
+
+
 def build_result(min_adv: float = F.MIN_ADV) -> dict:
     panel = F.feature_panel(min_adv)
     el = panel[panel.eligible]
@@ -208,6 +247,11 @@ def build_result(min_adv: float = F.MIN_ADV) -> dict:
     prev = [m for m in months if m < last_full]
     if prev:
         last_closed = closed_performance(prev[-1], last_full, min_adv)
+        if last_closed:
+            last_closed["predictor"] = predictor_closed(prev[-1], last_full, min_adv)
+            ed = pd.Timestamp(last_closed["entry_date"]); xd = pd.Timestamp(last_closed["exit_date"])
+            if ed in loglvl.index and xd in loglvl.index:
+                last_closed["market"] = round(float(np.expm1(loglvl.loc[xd] - loglvl.loc[ed])), 4)
     return {"regime": timing_regime(min_adv), "backtest": backtest(min_adv),
             "live": live, "predictor_live": predictor_live(last_full, min_adv),
             "last_closed": last_closed,

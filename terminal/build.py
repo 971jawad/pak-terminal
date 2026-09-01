@@ -627,8 +627,24 @@ PANELS.Strategy=()=>{
     t3.append(b3);cc.append($('div',{class:'tablewrap'},t3));
     cc.append($('div',{class:'kpi',style:'margin-top:10px'},
       $('span',{class:'v '+cls(cl.applied_ret)},pct(cl.applied_ret,1)),
-      $('span',{class:'l'},`realised · ${cl.entry_month||''} basket held to month-end ${cl.risk_on?'':'(gate RISK-OFF → real position was cash)'}`)));
-    cc.append($('div',{class:'note'},'This is the CLOSED, exit-anchored result of the month that just ended — it stops being marked once the month closes, so it no longer drifts. Kept visible because the live basket above rolls on the last session of each month; without this the finished month would vanish the moment it completed. Still n=1 and fat-tailed — do not extrapolate.'));
+      $('span',{class:'l'},`realised · gated momentum top-5 · ${cl.entry_month||''} basket held to month-end ${cl.risk_on?'':'(gate RISK-OFF → real position was cash)'}`)));
+    // completed-month ALL-STRATEGIES comparison (final, exit-anchored) — so the ML
+    // 1m/2m/3m results for the month that just ended are not lost on the roll
+    const cpl=(cl.predictor||{}).by_horizon||{};
+    const crows=[['Market (buy&hold / timing baseline)',cl.market],['Gated momentum top-5 (locked-in)',cl.applied_ret]];
+    ['1','2','3'].forEach(H=>{const d=cpl[H];if(d)crows.push([`ML futures predictor ${H}m`,d.basket_ret]);});
+    if(crows.some(([,v])=>v!=null)){
+      cc.append($('h3',{style:'margin-top:14px'},'All strategies — FINAL for the completed month'));
+      const cmax=Math.max(...crows.map(([,v])=>Math.abs(v||0)),0.05);
+      crows.forEach(([lab,v])=>cc.append($('div',{style:'display:grid;grid-template-columns:230px 1fr 60px;gap:8px;align-items:center;margin:4px 0'},
+        $('div',{style:lab.includes('Market')?'color:var(--muted)':'font-weight:600'},lab),
+        barRow(v||0,cmax,(v||0)>0?'var(--up)':'var(--down)'),
+        $('div',{class:'num '+cls(v)},pct(v,1)))));
+      ['1','2','3'].forEach(H=>{const d=cpl[H];if(!d||!(d.legs||[]).length)return;
+        cc.append($('div',{class:'chipwrap',style:'margin-top:8px'},$('span',{class:'mono muted',style:'font-size:11px;align-self:center'},`ML ${H}m: `),
+          ...d.legs.map(l=>$('span',{class:'pill',style:`background:var(--panel2);color:${(l.ret||0)>=0?'var(--up)':'var(--down)'}`},`${l.symbol} `,$('span',{class:'muted'},l.entry),` ${l.ret==null?'':pct(l.ret,0)}`))));});
+    }
+    cc.append($('div',{class:'note'},'This is the CLOSED, exit-anchored result of the month that just ended (entry-month picks held to month-end) — for every strategy, not just the gated basket. It stops being marked once the month closes, so it no longer drifts, and is kept here because the live blocks above roll on the last session of each month. Still n=1 and fat-tailed — do not extrapolate.'));
     w.append(cc);
   }
   // this-month live comparison across ALL pick strategies
