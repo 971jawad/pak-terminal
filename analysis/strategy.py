@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from pakterm import config, data
+from pakterm.trading_calendar import last_final_period, psx_holidays
 from analysis import futures_predictor as F
 from analysis.regime import ensemble_signal, timing_regime
 
@@ -61,19 +62,57 @@ def interim_performance(entry_ym, min_adv: float = F.MIN_ADV) -> dict:
         return {**pk, "legs": [], "basket_ret": None}
     df = data.load_prices()
     entry = pd.Timestamp(pk["entry_date"]); last = df.date.max()
+    # rolled TODAY: the basket was entered at this very close, so nothing has
+    # elapsed. Emit None (renders "—") rather than 0.0, which is indistinguishable
+    # from a measured zero and from the RISK-OFF cash state.
+    fresh = bool(last == entry)
     legs = []
     for p in pk["picks"]:
         s = df[df.symbol == p["symbol"]].set_index("date")["cumlog"]
         if entry in s.index and last in s.index:
-            r = float(np.expm1(s.loc[last] - s.loc[entry]))
+            r = None if fresh else float(np.expm1(s.loc[last] - s.loc[entry]))
             legs.append({**p, "last_close": float(df[(df.symbol == p["symbol"]) & (df.date == last)]["close"].iloc[0]),
-                         "ret": round(r, 3)})
-    basket = round(float(np.mean([l["ret"] for l in legs])), 3) if legs else None
+                         "ret": None if r is None else round(r, 3)})
+    rr = [l["ret"] for l in legs if l["ret"] is not None]
+    basket = round(float(np.mean(rr)), 3) if rr else None
     # if the gate was risk-off, the real position was cash, not the basket
-    applied = basket if pk["risk_on"] else 0.0
+    applied = None if fresh else (basket if pk["risk_on"] else 0.0)
     return {**pk, "as_of": str(last.date()), "days_held": int((last - entry).days),
             "legs": legs, "basket_ret": basket, "applied_ret": applied,
-            "note": "held basket" if pk["risk_on"] else "gate was RISK-OFF -> real position is cash"}
+            "rolled_today": fresh,
+            "note": ("entered at today's close — first mark next session" if fresh
+                     else ("held basket" if pk["risk_on"] else
+                           "gate was RISK-OFF -> real position is cash"))}
+
+
+def closed_performance(entry_ym, exit_ym, min_adv: float = F.MIN_ADV) -> dict:
+    """FINAL, exit-anchored result of a completed holding period (entry_ym month-end
+    -> exit_ym month-end). Used so a just-closed basket's realised return is not lost
+    the moment the live basket rolls."""
+    pk = picks_for(entry_ym, min_adv=min_adv)
+    if not pk["picks"]:
+        return {}
+    df = data.load_prices()
+    entry = pd.Timestamp(pk["entry_date"])
+    ex = df[df.date.dt.to_period("M") == pd.Period(exit_ym, "M")]["date"]
+    if ex.empty:
+        return {}
+    exit_d = ex.max()
+    if exit_d <= entry:
+        return {}
+    legs = []
+    for p in pk["picks"]:
+        s = df[df.symbol == p["symbol"]].set_index("date")["cumlog"]
+        if entry in s.index and exit_d in s.index:
+            legs.append({**p, "ret": round(float(np.expm1(s.loc[exit_d] - s.loc[entry])), 3)})
+    if not legs:
+        return {}
+    basket = round(float(np.mean([l["ret"] for l in legs])), 3)
+    return {"entry_month": str(entry_ym), "entry_date": str(entry.date()),
+            "exit_month": str(exit_ym), "exit_date": str(exit_d.date()),
+            "days_held": int((exit_d - entry).days), "risk_on": pk["risk_on"],
+            "legs": legs, "basket_ret": basket,
+            "applied_ret": basket if pk["risk_on"] else 0.0}
 
 
 def backtest(min_adv: float = F.MIN_ADV) -> dict:
@@ -145,9 +184,11 @@ def build_result(min_adv: float = F.MIN_ADV) -> dict:
     panel = F.feature_panel(min_adv)
     el = panel[panel.eligible]
     latest = data.latest_date()
-    # live entry = last COMPLETED month-end (exclude the current partial month)
-    completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
-    last_full = completed[-1] if completed else sorted(el.ym.unique())[-1]
+    # live entry = the newest month with NO possible trading day left in it, so we
+    # roll ON the last session of the month instead of waiting for the next month
+    months = sorted(el.ym.unique())
+    _fin = last_final_period(months, latest, psx_holidays())
+    last_full = _fin if _fin is not None else months[-1]
     live = interim_performance(last_full, min_adv)
     # market baseline over the same live window (= buy&hold and, since RISK-ON, the timing strategies too)
     mkt = data.market_index(min_adv); loglvl = np.log1p(mkt).cumsum()
@@ -156,8 +197,15 @@ def build_result(min_adv: float = F.MIN_ADV) -> dict:
         ed = pd.Timestamp(live["entry_date"])
         if ed in loglvl.index:
             mkt_since = round(float(np.expm1(loglvl.iloc[-1] - loglvl.loc[ed])), 4)
+    # the period that just closed — keep its FINAL realised result visible so it is
+    # not lost the instant the live basket rolls on month-end
+    last_closed = {}
+    prev = [m for m in months if m < last_full]
+    if prev:
+        last_closed = closed_performance(prev[-1], last_full, min_adv)
     return {"regime": timing_regime(min_adv), "backtest": backtest(min_adv),
             "live": live, "predictor_live": predictor_live(last_full, min_adv),
+            "last_closed": last_closed,
             "market_live": mkt_since, "as_of": str(data.latest_date().date())}
 
 

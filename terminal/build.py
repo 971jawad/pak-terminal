@@ -606,10 +606,31 @@ PANELS.Strategy=()=>{
     t2.append(b2);lc.append($('div',{class:'tablewrap'},t2));
     lc.append($('div',{class:'kpi',style:'margin-top:10px'},
       $('span',{class:'v '+cls(lv.basket_ret)},pct(lv.basket_ret,1)),
-      $('span',{class:'l'},`basket so far · ${lv.days_held||0} days · through ${lv.as_of||''} ${lv.risk_on?'':'(gate RISK-OFF → real position is cash)'}`)));
+      $('span',{class:'l'},lv.rolled_today
+        ? `just entered at the ${lv.entry_date||''} close — first mark next session`
+        : `basket so far · ${lv.days_held||0} days · through ${lv.as_of||''} ${lv.risk_on?'':'(gate RISK-OFF → real position is cash)'}`)));
   } else lc.append($('div',{class:'muted'},'no live picks'));
   lc.append($('div',{class:'note'},'⚠️ This is ONE partial period (~2 weeks of a 1–3 month hold), n=1 — as much luck as skill. It is the GOOD tail of a fat-tailed bet; the −30% drawdown periods look like this in reverse. Some of the gain is the market rebounding (beta), not selection. Do not extrapolate from one fortnight.'));
   w.append(lc);
+  // the month that just CLOSED — final, exit-anchored result (kept so it is not
+  // lost the instant the live basket rolls on month-end)
+  const cl=S.last_closed||{};
+  if((cl.legs||[]).length){
+    const cc=$('div',{class:'card',style:'margin-top:16px'});
+    cc.append($('h3',{},'Last completed month — FINAL ',
+      $('span',{class:'tag ok'},`${cl.entry_date||''} → ${cl.exit_date||''} · ${cl.days_held||0}d`)));
+    const t3=$('table');t3.append($('thead',{},$('tr',{},...['Symbol','Sector','Entry','Return'].map(h=>$('th',{},h)))));
+    const b3=$('tbody');[...cl.legs].sort((a,b)=>b.ret-a.ret).forEach(l=>b3.append($('tr',{},
+      $('td',{},$('b',{},l.symbol)),$('td',{class:'muted',style:'text-align:left;font-size:11px'},l.sector),
+      $('td',{class:'num muted'},l.entry_close),
+      $('td',{class:'num '+cls(l.ret)},pct(l.ret,1)))));
+    t3.append(b3);cc.append($('div',{class:'tablewrap'},t3));
+    cc.append($('div',{class:'kpi',style:'margin-top:10px'},
+      $('span',{class:'v '+cls(cl.applied_ret)},pct(cl.applied_ret,1)),
+      $('span',{class:'l'},`realised · ${cl.entry_month||''} basket held to month-end ${cl.risk_on?'':'(gate RISK-OFF → real position was cash)'}`)));
+    cc.append($('div',{class:'note'},'This is the CLOSED, exit-anchored result of the month that just ended — it stops being marked once the month closes, so it no longer drifts. Kept visible because the live basket above rolls on the last session of each month; without this the finished month would vanish the moment it completed. Still n=1 and fat-tailed — do not extrapolate.'));
+    w.append(cc);
+  }
   // this-month live comparison across ALL pick strategies
   const pl=S.predictor_live||{}, mk=S.market_live;
   const mc=$('div',{class:'card',style:'margin-top:16px'});

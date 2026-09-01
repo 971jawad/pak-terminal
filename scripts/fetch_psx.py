@@ -69,13 +69,23 @@ def download() -> None:
             dates.append(d)
         d += dt.timedelta(days=1)
     print(f"[fetch] queue={len(dates)} have={len(have)}", flush=True)
-    stats = {"ok": 0, "holiday": 0, "fail": 0}
+    stats = {"ok": 0, "holiday": 0, "fail": 0, "pending": 0}
+    today = dt.date.today()
     with cf.ThreadPoolExecutor(WORKERS) as ex:
         futs = {ex.submit(_fetch, dd): dd for dd in dates}
         for fut in cf.as_completed(futs):
-            res = fut.result(); stats[res] += 1
+            res = fut.result(); d = futs[fut]
+            if res == "holiday" and d >= today:
+                # A 404 for TODAY usually means "PSX has not published yet"
+                # (close is 15:30 PKT), NOT "market closed". Recording it would
+                # brand a real session a permanent holiday -- it is never
+                # re-probed -- and, now that holidays drive period finality,
+                # could close a period early. Leave it for tomorrow's run.
+                stats["pending"] += 1
+                continue
+            stats[res] += 1
             if res == "holiday":
-                holidays.add(futs[fut].isoformat())
+                holidays.add(d.isoformat())
     HOLIDAYS.write_text(json.dumps(sorted(holidays), indent=0))
     print(f"[fetch] {stats}", flush=True)
 

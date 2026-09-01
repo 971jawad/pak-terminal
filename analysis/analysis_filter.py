@@ -44,6 +44,7 @@ import numpy as np
 import pandas as pd
 
 from pakterm import data
+from pakterm.trading_calendar import last_final_period, psx_holidays
 from analysis import futures_predictor as F
 from analysis.regime import ensemble_signal
 
@@ -225,8 +226,9 @@ def filter_result(min_adv: float = F.MIN_ADV) -> dict:
     if el.empty:
         return {"picks": [], "backtest": {}}
     latest = data.latest_date()
-    completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
-    entry_ym = completed[-1] if completed else sorted(el.ym.unique())[-1]
+    months = sorted(el.ym.unique())
+    _fin = last_final_period(months, latest, psx_holidays())
+    entry_ym = _fin if _fin is not None else months[-1]
     g = panel[panel.eligible & (panel.ym == entry_ym)].copy()
     mac = data.load_macro_monthly(); mac.index = mac.index.to_period("M")
     reg = regime_state(mac, entry_ym)

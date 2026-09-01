@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 from pakterm import config, data
+from pakterm.trading_calendar import last_final_period, psx_holidays
 from analysis import futures_predictor as F
 from analysis.regime import ensemble_signal
 
@@ -102,8 +103,9 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     mp, feats = _prep(min_adv)
     el = mp[mp.eligible]
     latest = data.latest_date()
-    completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
-    entry = completed[-1] if completed else sorted(el.ym.unique())[-1]
+    months = sorted(el.ym.unique())
+    _fin = last_final_period(months, latest, psx_holidays())
+    entry = _fin if _fin is not None else months[-1]
     g = mp[(mp.ym == entry) & mp.eligible].copy()
     if len(g) < 12:
         return {"picks": [], "backtest": BACKTEST}

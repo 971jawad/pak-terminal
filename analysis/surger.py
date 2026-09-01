@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 
 from pakterm import config, data
+from pakterm.trading_calendar import last_final_period, psx_holidays
 from analysis import futures_predictor as F
 
 warnings.filterwarnings("ignore")
@@ -112,6 +113,10 @@ def _fit_predict(mp, feats, entry):
 def _pick_list(scored, score_col, K, last_close):
     top = scored.nlargest(K, score_col)
     picks = []
+
+    def _pctl(x):                       # NaN-safe percentile -> int, else None
+        return None if x is None or not np.isfinite(float(x)) else round(float(x) * 100)
+
     for rank_i, (_, r) in enumerate(top.iterrows(), 1):
         lc = float(last_close.get(r.symbol, np.nan))
         ret = (lc / float(r.close) - 1.0) if np.isfinite(lc) and r.close else None
@@ -121,9 +126,8 @@ def _pick_list(scored, score_col, K, last_close):
             "last_close": None if not np.isfinite(lc) else round(lc, 2),
             "ret": None if ret is None else round(ret, 4),
             "futures_eligible": bool(r.eligible),
-            "ens": round(float(r._ens), 3),
-            "rule_pct": round(float(r._rule) * 100), "ml_pct": round(float(r._ml) * 100),
-            "ai_pct": round(float(r._ai) * 100),
+            "ens": None if not np.isfinite(float(r._ens)) else round(float(r._ens), 3),
+            "rule_pct": _pctl(r._rule), "ml_pct": _pctl(r._ml), "ai_pct": _pctl(r._ai),
         })
     rr = [p["ret"] for p in picks if p["ret"] is not None]
     re = [p["ret"] for p in picks if p["ret"] is not None and p["futures_eligible"]]
@@ -196,8 +200,9 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     latest = data.latest_date()
     # anchor to the last COMPLETED month so entry price is fixed and returns
     # accumulate daily (rolls forward automatically as each month closes)
-    completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
-    entry = completed[-1] if completed else sorted(el.ym.unique())[-1]
+    months = sorted(el.ym.unique())
+    _fin = last_final_period(months, latest, psx_holidays())
+    entry = _fin if _fin is not None else months[-1]
     out = predict(entry, K=15, min_adv=min_adv)
     # tag every pick with its earnings-backing (forward context, not an edge)
     fund = _load_fund()

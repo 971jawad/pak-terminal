@@ -39,6 +39,7 @@ import numpy as np
 import pandas as pd
 
 from pakterm import config, data
+from pakterm.trading_calendar import last_final_period, psx_holidays
 from analysis import futures_predictor as F
 from analysis import analysis_filter as AF
 from analysis.regime import ensemble_signal
@@ -204,8 +205,9 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     # ---- entry month + per-variant baskets ----
     latest = data.latest_date()
     el = mp[mp.eligible]
-    completed = [m for m in sorted(el.ym.unique()) if el[el.ym == m].date.max() < latest]
-    entry = completed[-1] if completed else sorted(el.ym.unique())[-1]
+    months = sorted(el.ym.unique())
+    _fin = last_final_period(months, latest, psx_holidays())
+    entry = _fin if _fin is not None else months[-1]
     ge = mp[(mp.ym == entry) & mp.eligible].copy()
     sign_e = AF.regime_state(mac, entry)["sign"]
     df = data.load_prices(); last_date = df.date.max()
