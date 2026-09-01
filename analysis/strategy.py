@@ -156,6 +156,7 @@ def predictor_live(entry_ym, min_adv: float = F.MIN_ADV) -> dict:
     if p[p.ym == entry_p].empty:
         return {"by_horizon": {}}
     entry_date = p[p.ym == entry_p].date.max()
+    fresh = bool(last == entry_date)          # rolled today: nothing elapsed -> None, not 0.0%
     cuml = df.set_index(["symbol", "date"])["cumlog"]
     out = {}
     for H in F.HORIZONS:
@@ -168,15 +169,19 @@ def predictor_live(entry_ym, min_adv: float = F.MIN_ADV) -> dict:
         cur = cur.assign(score=m.predict(cur[F.FEATURES].to_numpy(np.float32)))
         legs = []
         for _, r in cur.nlargest(F.TOPK, "score").iterrows():
-            try:
-                ret = float(np.expm1(cuml.loc[(r.symbol, last)] - cuml.loc[(r.symbol, entry_date)]))
-            except KeyError:
+            if fresh:
                 ret = None
+            else:
+                try:
+                    ret = float(np.expm1(cuml.loc[(r.symbol, last)] - cuml.loc[(r.symbol, entry_date)]))
+                except KeyError:
+                    ret = None
             legs.append({"symbol": r.symbol, "sector": r.sector_name,
                          "entry": round(float(r.close), 2),
                          "ret": None if ret is None else round(ret, 3)})
         rr = [l["ret"] for l in legs if l["ret"] is not None]
-        out[str(H)] = {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None}
+        out[str(H)] = {"legs": legs, "basket_ret": round(float(np.mean(rr)), 3) if rr else None,
+                       "rolled_today": fresh}
     return {"entry_date": str(entry_date.date()), "as_of": str(last.date()), "by_horizon": out}
 
 
