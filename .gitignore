@@ -10,3 +10,4 @@ __pycache__/
 .venv/
 .DS_Store
 excalidraw.log
+.audit_findings.json
