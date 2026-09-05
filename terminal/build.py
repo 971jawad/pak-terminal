@@ -1262,22 +1262,27 @@ PANELS.Ultimate=()=>{
   // consensus filter — common picks across the running models (this month)
   const CN=D.consensus||{};const cr=CN.rows||[];const bk=CN.buckets||{};
   const cc=$('div',{class:'card',style:'margin-top:16px'});
-  cc.append($('h3',{},'Consensus filter — common picks ',$('span',{class:'tag warn'},`this month · ${CN.n_distinct||0} names across all models`)));
+  cc.append($('h3',{},'Consensus filter — common picks ',
+    $('span',{class:'tag warn'},`entry ${CN.entry_date||CN.entry_month||'—'} → marked ${CN.as_of||''} · ${CN.n_distinct||0} names`)));
   const bl=(b,lab)=>$('div',{class:'card'},$('div',{class:'kpi'},
     $('span',{class:'v '+cls(b&&b.avg)},(b&&b.avg!=null)?pct(b.avg,1):'—'),
     $('span',{class:'l'},`${lab} · ${b?b.n:0} names${(b&&b.pos!=null)?' · '+Math.round(b.pos*100)+'% up':''}`)));
   cc.append($('div',{class:'grid cols3'},bl(bk.solo,'1 model (solo)'),bl(bk.multi,'2-3 models'),bl(bk.strong,'4+ models')));
-  cc.append($('div',{class:'note'},'Names only ONE model picks average negative; agreement across models removes the idiosyncratic losers. Below: every name ≥2 models agree on this month.'));
+  // verdict is DERIVED from the buckets above, so it can never contradict them
+  if(CN.verdict)cc.append($('div',{class:'note',style:'border-left:3px solid var(--accent)'},CN.verdict));
   if(cr.length){const t=$('table',{style:'margin-top:10px'});
-    t.append($('thead',{},$('tr',{},...['Symbol','Sector','Models','Return','Which'].map(h=>$('th',{},h)))));
+    t.append($('thead',{},$('tr',{},...['Symbol','Sector','Models','Entry','Entry px','Return','Which'].map(h=>$('th',{},h)))));
     const tb=$('tbody');
     cr.forEach(r=>tb.append($('tr',{style:r.n_models>=4?'background:var(--accent-soft)':''},
       $('td',{},$('b',{},r.symbol)),
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},r.sector||'—'),
       $('td',{class:'num accent'},r.n_models),
+      $('td',{class:'num muted',style:'font-size:10.5px'},(r.entry_date||'—'),r.mixed_entries?$('span',{class:'muted',title:'models entered on different dates'},'*'):null),
+      $('td',{class:'num muted'},r.entry==null?'—':r.entry),
       $('td',{class:'num '+cls(r.ret)},r.ret==null?'—':pct(r.ret,1)),
       $('td',{class:'mono muted',style:'text-align:left;font-size:10px'},(r.models||[]).join(', ')))));
     t.append(tb);cc.append($('div',{class:'tablewrap'},t));
+    cc.append($('div',{class:'muted',style:'font-size:10.5px;margin-top:4px'},'* this name was entered on different dates by different models — the earliest is shown, and its return is measured from that entry.'));
   } else cc.append($('div',{class:'muted'},'no multi-model consensus this month'));
   cc.append($('div',{class:'note'},CN.note||''));
   w.append(cc);

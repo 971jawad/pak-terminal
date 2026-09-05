@@ -193,22 +193,32 @@ def _consensus(strat, surg):
     the bundle (no extra model fits): names >=2 running models agree on."""
     import numpy as np
     picks = {}
-    def add(model, sym, ret, sector=None):
-        d = picks.setdefault(sym, {"models": set(), "ret": None, "sector": sector})
+    def add(model, sym, ret, sector=None, entry=None, entry_date=None):
+        d = picks.setdefault(sym, {"models": set(), "ret": None, "sector": sector,
+                                   "entry": None, "entry_dates": set()})
         d["models"].add(model)
         if ret is not None:
             d["ret"] = ret
         if sector:
             d["sector"] = sector
+        if entry is not None and d["entry"] is None:
+            d["entry"] = entry
+        if entry_date:
+            d["entry_dates"].add(entry_date)
     live = strat.get("live", {}) or {}
     for l in live.get("legs", []):
-        add("Gated Top-5", l["symbol"], l.get("ret"), l.get("sector"))
+        add("Gated Top-5", l["symbol"], l.get("ret"), l.get("sector"),
+            l.get("entry_close"), live.get("entry_date"))
+    # each ML horizon now has its OWN entry date (1m monthly, 2m/3m held through their
+    # horizon), so carry each leg's own entry rather than assuming one shared date
     for hh, dd in ((strat.get("predictor_live", {}) or {}).get("by_horizon", {}) or {}).items():
         for l in dd.get("legs", []):
-            add(f"ML {hh}m", l["symbol"], l.get("ret"), l.get("sector"))
+            add(f"ML {hh}m", l["symbol"], l.get("ret"), l.get("sector"),
+                l.get("entry"), dd.get("entry_date"))
     for meth, dd in (surg.get("by_method", {}) or {}).items():
         for p in dd.get("picks", []):
-            add(f"Surger-{meth}", p["symbol"], p.get("ret"), p.get("sector"))
+            add(f"Surger-{meth}", p["symbol"], p.get("ret"), p.get("sector"),
+                p.get("entry_close"), surg.get("entry_date"))
     allr = [(len(v["models"]), v["ret"]) for v in picks.values() if v["ret"] is not None]
     def bucket(lo, hi):
         rs = [r for n, r in allr if lo <= n <= hi]
@@ -216,15 +226,39 @@ def _consensus(strat, surg):
                 "avg": (round(float(np.mean(rs)), 4) if rs else None),
                 "pos": (round(float(np.mean([x > 0 for x in rs])), 2) if rs else None)}
     rows = [{"symbol": s, "n_models": len(v["models"]), "ret": v["ret"],
-             "sector": v["sector"], "models": sorted(v["models"])}
+             "sector": v["sector"], "models": sorted(v["models"]),
+             "entry": v["entry"],
+             "entry_date": (min(v["entry_dates"]) if v["entry_dates"] else None),
+             "mixed_entries": len(v["entry_dates"]) > 1}
             for s, v in picks.items() if len(v["models"]) >= 2]
     rows.sort(key=lambda r: (-r["n_models"], -(r["ret"] if r["ret"] is not None else -9)))
+    b = {"solo": bucket(1, 1), "multi": bucket(2, 3), "strong": bucket(4, 99)}
+    # Describe what the numbers ACTUALLY say instead of asserting a fixed story. The old
+    # hardcoded line ("solo picks average negative; agreement removes the idiosyncratic
+    # losers") had silently become the exact OPPOSITE of its own table — solo was +1.3%
+    # while 2-3 models averaged -0.5% — and sat there contradicting the data above it.
+    # Deriving the direction means it can never drift out of sync again.
+    so, mu, st = b["solo"]["avg"], b["multi"]["avg"], b["strong"]["avg"]
+    if so is None or mu is None:
+        verdict = "Not enough marked names yet to compare agreement against solo picks."
+    elif mu > so:
+        verdict = (f"So far this period agreement HELPED: names ≥2 models agree on average "
+                   f"{mu*100:+.1f}% vs {so*100:+.1f}% for solo (1-model) picks.")
+    else:
+        verdict = (f"So far this period agreement did NOT help: names ≥2 models agree on "
+                   f"average {mu*100:+.1f}% vs {so*100:+.1f}% for solo (1-model) picks. "
+                   f"Overlap concentrates the crowded, already-extended names.")
+    if st is not None and b["strong"]["n"] < 5:
+        verdict += (f" The ≥4-model bucket holds only {b['strong']['n']} name(s) "
+                    f"({st*100:+.1f}%) — far too few to read anything into.")
     return {"entry_month": live.get("entry_month"), "as_of": live.get("as_of"),
-            "n_distinct": len(picks), "rows": rows,
-            "buckets": {"solo": bucket(1, 1), "multi": bucket(2, 3), "strong": bucket(4, 99)},
-            "note": "Consensus filter — names that >=2 of the currently-running models agree on "
-                    "this month. Solo picks (1 model) average negative; agreement removes the "
-                    "idiosyncratic losers. One-month observation, not a validated edge."}
+            "entry_date": live.get("entry_date"),
+            "n_distinct": len(picks), "rows": rows, "buckets": b, "verdict": verdict,
+            "note": "Consensus filter — names that ≥2 of the currently-running models "
+                    "agree on. Models run on DIFFERENT horizons and entry dates (gated top-5 and "
+                    "ML 1m re-pick monthly; ML 2m/3m are held through their horizon; Surger is a "
+                    "6-month basket), so a row's return is measured from ITS OWN entry, shown per "
+                    "row. Partial marks on an unfinished hold — not a validated edge."}
 
 
 def _ultimate(min_adv):

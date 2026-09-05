@@ -92,14 +92,53 @@ def headlines() -> list[str]:
     return out[:40]
 
 
+def _prev(name: str) -> dict:
+    p = OUT / name
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def main():
-    wb = world_bank()
-    (OUT / "worldbank.json").write_text(json.dumps(wb, indent=None), encoding="utf-8")
-    hl = headlines()
     from datetime import date
-    (OUT / "headlines.json").write_text(
-        json.dumps({"as_of": date.today().isoformat(), "source": "profit.pakistantoday.com.pk",
-                    "headlines": hl}, indent=None), encoding="utf-8")
+    today = date.today().isoformat()
+
+    # NEVER clobber good data with a failed fetch. Both sources are best-effort and
+    # CI runs from an IP the publisher may block; writing the empty result would
+    # delete real content AND stamp it with today's date, so the terminal would show
+    # a fresh-looking header above nothing (exactly how headlines.json ended up
+    # {"as_of": "2026-09-01", "headlines": []}). Keep the last good payload instead
+    # and record how stale it is, so the UI can say so honestly.
+    wb = world_bank()
+    if sum(1 for v in wb.values() if "latest" in v):
+        (OUT / "worldbank.json").write_text(json.dumps(wb, indent=None), encoding="utf-8")
+    else:
+        print("world bank: fetch returned nothing, keeping existing worldbank.json")
+        wb = _prev("worldbank.json")
+
+    hl = headlines()
+    if hl:
+        (OUT / "headlines.json").write_text(
+            json.dumps({"as_of": today, "last_ok": today,
+                        "source": "profit.pakistantoday.com.pk",
+                        "headlines": hl}, indent=None), encoding="utf-8")
+    else:
+        old = _prev("headlines.json")
+        kept = old.get("headlines") or []
+        # keep last_ok pinned to when the content was actually fetched, and record
+        # the failed attempt separately — never advance as_of past real content
+        (OUT / "headlines.json").write_text(
+            json.dumps({"as_of": old.get("as_of") or old.get("last_ok"),
+                        "last_ok": old.get("last_ok") or old.get("as_of"),
+                        "last_attempt": today, "stale": True,
+                        "source": "profit.pakistantoday.com.pk",
+                        "headlines": kept}, indent=None), encoding="utf-8")
+        print(f"headlines: scrape returned 0, kept {len(kept)} existing (marked stale)")
+        hl = kept
+
     print(f"world bank: {sum(1 for v in wb.values() if 'latest' in v)}/{len(wb)} indicators")
     for k, v in wb.items():
         if "latest" in v:
