@@ -11,3 +11,4 @@ __pycache__/
 .DS_Store
 excalidraw.log
 .audit_findings.json
+.worklog.md
