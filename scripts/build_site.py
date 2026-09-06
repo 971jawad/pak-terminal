@@ -30,13 +30,14 @@ def main():
     # refresh macro/policy HEADLINES daily (guarded: keep last good file if the scrape
     # fails or returns nothing, so the news feed + sector-catalyst cross-ref stay current)
     try:
+        # delegate to the single writer in refresh_macro so the never-clobber guard and
+        # the last_ok/stale fields are applied identically here and in the weekly job.
+        # This used to be a duplicated inline writer that omitted last_ok, so the tab
+        # could not tell a stale set from a fresh one.
         subprocess.run([PY, "-c",
-            "import sys,json; sys.path.insert(0,'.'); from datetime import date; "
-            "from scripts.refresh_macro import headlines as H; hl=H(); "
-            "open('data/macro/headlines.json','w',encoding='utf-8').write(json.dumps("
-            "{'as_of':date.today().isoformat(),'source':'profit.pakistantoday.com.pk','headlines':hl})) "
-            "if hl else print('no headlines scraped, keeping existing'); "
-            "print(f'headlines refreshed: {len(hl)}')"],
+            "import sys; sys.path.insert(0,'.'); "
+            "from scripts.refresh_macro import refresh_headlines; "
+            "print(f'headlines on disk: {refresh_headlines()}')"],
             cwd=str(ROOT), check=False, timeout=120)
     except Exception as e:
         print(f"headlines refresh skipped: {type(e).__name__}")

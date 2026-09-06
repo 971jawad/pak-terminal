@@ -156,7 +156,11 @@ def _basket(variant, ge, sign, fu, lastc):
                       "weight": round(float(r.weight), 4), "entry_close": round(float(r.close), 2),
                       "last_close": None if not np.isfinite(lc) else round(lc, 2),
                       "ret": None if ret is None else round(ret, 4),
-                      "eps_growth": eg, "tag": _tag(eg, mom3=r.get("mom_3m"))})
+                      "eps_growth": eg,
+                      # pass `ext` like the high-conviction rows do (live_result); without it a
+                      # name flagged FAKEOUT for being extended showed up as WATCH in the basket,
+                      # so the same symbol carried two different tags on one screen
+                      "tag": _tag(eg, r.get("ext"), r.get("mom_3m"))})
     rr = np.array([p["ret"] for p in picks if p["ret"] is not None])
     ww = np.array([p["weight"] for p in picks if p["ret"] is not None])
     basket = float(np.sum(ww * rr) / ww.sum()) if len(rr) else None
@@ -210,20 +214,43 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     entry = _fin if _fin is not None else months[-1]
     ge = mp[(mp.ym == entry) & mp.eligible].copy()
     sign_e = AF.regime_state(mac, entry)["sign"]
+    # ext (extension vs trend) must exist on the ENTRY cross-section too, or _basket
+    # cannot tag an over-extended name FAKEOUT the way the high-conviction table does
+    sc_e, ext_e = _raw_score(ge, sign_e)
+    ge = ge.assign(sc=sc_e, ext=ext_e)
     df = data.load_prices(); last_date = df.date.max()
     lastc = df.sort_values("date").groupby("symbol").close.last()
     entry_date = ge.date.max()
+    # the trade is a ONE-MONTH hold: bought at entry month-end, judged at the end of the
+    # following month. Say so explicitly — the tab used to show a 1-day mark as if it
+    # were the month's result.
+    exit_month = entry + 1
+    sess = df[(df.date > entry_date) & (df.date <= last_date)]["date"].nunique()
+    mkt = data.market_index(min_adv); mlvl = np.log1p(mkt).cumsum()
+    market_ret = None
+    if entry_date in mlvl.index and last_date in mlvl.index:
+        market_ret = round(float(np.expm1(mlvl.loc[last_date] - mlvl.loc[entry_date])), 4)
 
     labels = {"raw": "A · Raw score", "conviction": "B · Conviction (earnings-tilted)",
               "combined": "★ Combined ensemble"}
     variants = {}
     for key in ("raw", "conviction", "combined"):
         picks, bret = _basket(key, ge, sign_e, fu, lastc)
+        # how much of the basket sits in names this same engine tags FAKEOUT ("scalp with
+        # a stop, do NOT hold") — the recommended trade is a 1-month HOLD, so a large
+        # FAKEOUT weight is the basket contradicting its own advice and must be visible
+        tw = {}
+        for p in picks:
+            tw[p["tag"]] = round(tw.get(p["tag"], 0.0) + p["weight"], 4)
         variants[key] = {"label": labels[key], "picks": picks, "basket_ret": bret,
-                         "backtest": BACKTESTS[key]}
+                         "backtest": BACKTESTS[key], "tag_weight": tw,
+                         "fakeout_weight": tw.get("FAKEOUT", 0.0)}
 
     return {
         "as_of": str(last_date.date()), "entry_month": str(entry), "entry_date": str(entry_date.date()),
+        # full trade specification — what is bought, when, and when it is judged
+        "exit_month": str(exit_month), "hold": "1 month", "sessions_held": int(sess),
+        "fresh": bool(sess == 0), "market_ret": market_ret,
         "regime": {"label": reg["label"], "sign": sign, "favored": favored, "policy_rate": rate},
         "opportunity": {"trade": bool(trade), "dispersion": round(disp_cur, 3),
                         "disp_median": round(disp_med, 3), "risk_on": bool(expo >= 0.5)},

@@ -30,6 +30,10 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 START = dt.date(2019, 7, 1)
 WORKERS, RETRIES = 8, 3
+# The newest file is what the deployed terminal is judged on. A transient 403
+# from DPS rate-limiting cost psx-quant its 2026-09-04 file (fail=1, silent),
+# so recent dates get materially more patience than historical backfill.
+RECENT_DAYS, RECENT_RETRIES = 7, 6
 COLS = ["date", "symbol", "sector", "name", "open", "high", "low", "close", "volume", "ldcp"]
 _tls = threading.local()
 
@@ -45,7 +49,8 @@ def _session():
 
 def _fetch(date: dt.date) -> str:
     url = BASE.format(date.isoformat()); out = RAW / f"{date.isoformat()}.Z"
-    for attempt in range(RETRIES):
+    recent = (dt.date.today() - date).days <= RECENT_DAYS
+    for attempt in range(RECENT_RETRIES if recent else RETRIES):
         try:
             r = _session().get(url, timeout=30)
             if r.status_code == 404:
@@ -54,7 +59,7 @@ def _fetch(date: dt.date) -> str:
                 out.write_bytes(r.content); return "ok"
         except requests.RequestException:
             pass
-        time.sleep(1.5 * (attempt + 1))
+        time.sleep(min(2.5 * (attempt + 1) if recent else 1.5 * (attempt + 1), 20.0))
     return "fail"
 
 
@@ -88,6 +93,11 @@ def download() -> None:
                 holidays.add(d.isoformat())
     HOLIDAYS.write_text(json.dumps(sorted(holidays), indent=0))
     print(f"[fetch] {stats}", flush=True)
+    if stats["fail"]:
+        # a hard fail is NOT a holiday: the date stays queued and is retried next
+        # run, but say so loudly so a stale site is never mistaken for a closed market
+        print(f"[fetch] WARNING: {stats['fail']} date(s) hard-failed (403/5xx/timeout, "
+              f"not a 404 holiday). They remain queued for the next run.", flush=True)
 
 
 def _parse_file(path: Path) -> list[list]:

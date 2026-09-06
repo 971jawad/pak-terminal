@@ -1014,13 +1014,37 @@ PANELS.Surger=()=>{
   const w=$('div',{});const S=D.surger||{};
   w.append($('h2',{class:'sect-title'},'Surger Predictor'),
     $('p',{class:'lead'},'Forward 6-month surger picks from a rule + ML + AI ensemble on the FULL liquid universe. Futures-eligibility is a SEPARATE overlay (⚡ = leverageable via single-stock futures) — toggle it below. Returns mark-to-market and update daily. A wide-basket harvest: it catches ~30% of surgers out-of-sample; it does not snipe individual mega-surgers.'));
-  const mc=$('div',{class:'card'});
-  mc.append($('h3',{},'Live prediction ',$('span',{class:'tag warn'},`entry ${S.entry_month||'—'} · forward ${S.forward_window||''}`)));
-  mc.append($('div',{class:'mono muted',style:'font-size:12px;margin-bottom:10px'},`made at ${S.entry_date||'—'} · marked to ${S.as_of||''} (${S.days_held||0}d) · universe ${S.universe_n||0} names (${S.n_eligible||0} futures-eligible)`));
-  const kwrap=$('div',{class:'grid cols2'});
-  kwrap.append($('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cls(S.basket_ret)},pct(S.basket_ret,1)),$('span',{class:'l'},'basket so far · all picks'))),
-    $('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cls(S.basket_ret_eligible)},pct(S.basket_ret_eligible,1)),$('span',{class:'l'},'basket so far · ⚡ futures-eligible only'))));
-  mc.append(kwrap);
+  const SC=S.scorecard||{};
+  const judged=(S.forward_window||'').split('→').pop().trim();   // "2026-09 → 2027-02" -> "2027-02"
+  const hm=SC.horizon_months||6;
+  // ===== THE TRADE — stated before anything else =====
+  const mc=$('div',{class:'card',style:'border-left:3px solid var(--accent)'});
+  mc.append($('h3',{},'The trade'));
+  mc.append($('div',{class:'mono',style:'font-size:15px;margin:6px 0 2px'},
+    `BUY ${S.K||15} names equal-weight at the `,$('b',{class:'accent'},S.entry_date||'—'),' close  →  JUDGE end of ',$('b',{class:'accent'},judged||'—')));
+  mc.append($('div',{class:'mono muted',style:'font-size:12px;margin-bottom:8px'},
+    `${hm}-month hold · day ${S.days_held||0} · universe ${S.universe_n||0} names (${S.n_eligible||0} futures-eligible)`));
+  // ===== the OOS verdict — this scorecard existed in the data but was never rendered =====
+  const lift=(SC.precision_oos&&SC.base_rate)?(SC.precision_oos/SC.base_rate):null;
+  const kp=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
+  mc.append($('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px'},
+    kp(SC.precision_oos!=null?Math.round(SC.precision_oos*100)+'%':'—','of picks became surgers · out-of-sample','accent'),
+    kp(SC.base_rate!=null?Math.round(SC.base_rate*100)+'%':'—','same odds picking at random','muted'),
+    kp(lift?lift.toFixed(1)+'×':'—','lift on the hit rate','up'),
+    kp(SC.catch_rate_oos!=null?Math.round(SC.catch_rate_oos*100)+'%':'—','of all surgers caught (misses the rest)'),
+    kp(SC.cumulative_oos||'—','cumulative over the held-out half')));
+  mc.append($('div',{class:'note',style:'border-left:3px solid var(--down)'},
+    `Read this honestly: ${SC.precision_oos!=null?Math.round(SC.precision_oos*100):27}% precision means roughly `+
+    `${Math.round((SC.precision_oos||0.27)*(S.K||15))} of the ${S.K||15} names become surgers and the rest do NOT — `+
+    `the edge is a ${lift?lift.toFixed(1):'~4'}× better hit RATE than random, which is not the same thing as a return multiple. `+
+    `The "${SC.cumulative_oos||'2.8x'}" beside it is a total-return figure over a different basis, and the shipped backtest records no `+
+    `buy-and-hold benchmark over the identical months, so this tab CANNOT claim it beat the index. It is a wide-basket harvest, not a sniper.`));
+  // mark-to-market demoted: it is day 1 of a 6-month trade, not a result
+  mc.append($('div',{class:'mono muted',style:'font-size:11.5px;margin-top:8px'},
+    `mark-to-market, day ${S.days_held||0} of a ${hm}-month hold (not a result yet) — all ${S.K||15} picks `,
+    $('b',{class:cls(S.basket_ret)},pct(S.basket_ret,1)),
+    `  ·  ⚡ futures-eligible subset only `,$('b',{class:cls(S.basket_ret_eligible)},pct(S.basket_ret_eligible,1))));
+  mc.append($('div',{class:'mono muted',style:'font-size:11px'},`method: ${SC.method||'—'}`));
   w.append(mc);
   const pill='font-family:var(--mono);font-size:12px;padding:4px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--panel2);color:var(--ink);cursor:pointer';
   const BM=S.by_method||{};
@@ -1051,16 +1075,21 @@ PANELS.Surger=()=>{
   function draw(){
     holder.innerHTML='';
     Object.entries(mbtn).forEach(([m,b])=>{b.style.borderColor=m===curM?'var(--accent)':'var(--bd)';b.style.color=m===curM?'var(--accent)':'var(--ink)';});
-    const d=BM[curM]||{};let picks=(d.picks||[]);if(eligOnly)picks=picks.filter(p=>p.futures_eligible);
+    const d=BM[curM]||{};const allP=(d.picks||[]);let picks=allP;if(eligOnly)picks=allP.filter(p=>p.futures_eligible);
+    if(eligOnly&&picks.length<allP.length){
+      const dropped=allP.filter(p=>!p.futures_eligible).slice(0,3).map(p=>`${p.symbol} (#${p.rank})`).join(', ');
+      holder.append($('div',{class:'muted',style:'font-size:11px;margin-top:10px'},
+        `showing ${picks.length} of ${allP.length} — ${allP.length-picks.length} top-ranked names are not futures-eligible and are hidden: ${dropped}${allP.length-picks.length>3?'…':''}. The # column keeps each name's TRUE rank.`));}
     const t=$('table',{style:'margin-top:12px'});
-    t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector','Entry','Now','Return','Earnings','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
+    t.append($('thead',{},$('tr',{},...['#','Sym','⚡','Sector',`Entry px · ${S.entry_date||''}`,`Px · ${S.as_of||''}`,'Return','Earnings','Ens','R/ML/AI'].map(h=>$('th',{},h)))));
     const tb=$('tbody');
     const ecls=e=>e==='earnings-backed'?'up':e==='price-ahead'?'down':'muted';
-    picks.forEach((p,i)=>tb.append($('tr',{},$('td',{class:'num muted'},i+1),$('td',{},$('b',{},p.symbol)),
+    // render the model's TRUE rank, not the loop index — filtering used to silently renumber
+    picks.forEach((p,i)=>tb.append($('tr',{},$('td',{class:'num muted'},p.rank==null?i+1:p.rank),$('td',{},$('b',{},p.symbol)),
       $('td',{style:'text-align:center'},p.futures_eligible?'⚡':''),
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},p.sector),
-      $('td',{class:'num muted'},p.entry_close),
-      $('td',{class:'num'},p.last_close==null?'—':p.last_close),
+      $('td',{class:'num'},p.entry_close),
+      $('td',{class:'num muted'},p.last_close==null?'—':p.last_close),
       $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)),
       $('td',{style:'text-align:left;font-size:10px'},$('span',{class:ecls(p.earn_read)},p.earn_read||'—'),p.eps_growth!=null?$('span',{class:'muted'},` ${p.eps_growth>0?'+':''}${p.eps_growth}%`):''),
       $('td',{class:'num accent'},p.ens),
@@ -1074,16 +1103,35 @@ PANELS.Surger=()=>{
   pc.append($('div',{class:'note'},'Switch models with the chips. Columns: Ens = ensemble score; R/ML/AI = each model’s percentile rank for that name. ⚡ = futures-eligible; the toggle filters to that subset. Entry = last completed month-end; returns update daily, window rolls monthly.'));
   w.append(pc);
   // full backtest — every method & combination
-  const bt=(S.backtest_methods||{}).K15||[];
+  const BTM=S.backtest_methods||{};
   const bc=$('div',{class:'card',style:'margin-top:16px'});
-  bc.append($('h3',{},'Backtest — every method & combination ',$('span',{class:'tag ok'},'walk-forward · OOS held-out half')));
-  const t2=$('table');t2.append($('thead',{},$('tr',{},...['Method','Precision','Catch %','Cumulative','Max DD'].map(h=>$('th',{},h)))));
-  const tb2=$('tbody');
-  bt.forEach(r=>tb2.append($('tr',{style:r.m==='Rule+ML+AI'?'background:var(--accent-soft)':''},
-    $('td',{},r.m),$('td',{class:'num'},r.prec+'%'),$('td',{class:'num'},r.catch+'%'),
-    $('td',{class:'num accent'},r.mult),$('td',{class:'num '+cls(r.dd)},(r.dd>0?'+':'')+r.dd+'%'))));
-  t2.append(tb2);bc.append($('div',{class:'tablewrap'},t2));
-  bc.append($('div',{class:'note'},'6-month hold, non-overlapping, gated, held-out second half of 2019–2026 (K=15 basket). Precision base rate ~7%, so ~27% is a 3–4× edge that survives out-of-sample. No single method dominates; the ensemble adds catch-rate. (Concentrated K=5 ensembles reach 4–6× in the test half but on tiny samples — high variance.) A WIDE-basket harvest, not a sniper.'));
+  const bhdr=$('div',{style:'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px'});
+  bhdr.append($('h3',{style:'margin:0'},'Backtest — every method & combination ',$('span',{class:'tag ok'},'walk-forward · OOS held-out half')));
+  // the K5 table shipped in the data but was never rendered — it carries the whole
+  // concentration trade-off the note below only described in words
+  let curK='K15';const kbtn={};const ksel=$('div',{class:'chipwrap'});
+  ['K15','K5'].forEach(k=>{if(!(BTM[k]||[]).length)return;const b=$('button',{style:pill},k==='K15'?'K=15 (wide)':'K=5 (concentrated)');
+    kbtn[k]=b;b.onclick=()=>{curK=k;drawBT();};ksel.append(b);});
+  bhdr.append(ksel);bc.append(bhdr);
+  const bholder=$('div',{});bc.append(bholder);
+  function drawBT(){
+    bholder.innerHTML='';
+    Object.entries(kbtn).forEach(([k,b])=>{b.style.borderColor=k===curK?'var(--accent)':'var(--bd)';b.style.color=k===curK?'var(--accent)':'var(--ink)';});
+    const bt=BTM[curK]||[];
+    const t2=$('table',{style:'margin-top:12px'});
+    t2.append($('thead',{},$('tr',{},...['Method','Precision','Catch %','Cumulative','Worst period'].map(h=>$('th',{},h)))));
+    const tb2=$('tbody');
+    bt.forEach(r=>tb2.append($('tr',{style:r.m==='Rule+ML+AI'?'background:var(--accent-soft)':''},
+      $('td',{},r.m),$('td',{class:'num'},r.prec+'%'),$('td',{class:'num'},r.catch+'%'),
+      $('td',{class:'num accent'},r.mult),$('td',{class:'num '+cls(r.dd)},(r.dd>0?'+':'')+r.dd+'%'))));
+    t2.append(tb2);bholder.append($('div',{class:'tablewrap'},t2));
+    bholder.append($('div',{class:'muted',style:'font-size:11px;margin-top:6px'},
+      curK==='K15'
+        ? 'K=15 spreads the bet: higher catch (~30%), shallow worst period, lower multiple.'
+        : 'K=5 concentrates it: multiples look far better (4–6×) but catch collapses to ~7–13% and the worst period runs to −26%. Very few picks → very high variance. Do not read these as better.'));
+  }
+  drawBT();
+  bc.append($('div',{class:'note'},'6-month hold, non-overlapping, gated, held-out second half of 2019–2026. "Precision" = share of picks that became surgers (random base rate ~7%), so ~27% is a ~4× lift ON THE HIT RATE — a different quantity from the "Cumulative" column beside it, which is a total-return multiple. "Worst period" is the worst single non-overlapping 6-month basket return, NOT an equity-curve max drawdown — a 0% there means no losing 6-month period in the test half, not a risk-free strategy. No single method dominates; the ensemble mainly adds catch-rate.'));
   w.append(bc);
   return w;
 };
@@ -1128,25 +1176,44 @@ PANELS.Catalysts=()=>{
 PANELS.MacroNews=()=>{
   const w=$('div',{});const M=D.macro_live||{};const WB=M.worldbank||{};
   w.append($('h2',{class:'sect-title'},'Macro & Policy'),
-    $('p',{class:'lead'},'Auto-refreshed weekly. Annual macro numbers from the World Bank (keyless, reliable) + recent Pakistan macro / policy / geopolitical headlines scraped from the business press. Keeps the terminal current on inflation, rates, IMF, budget and geopolitics without a manual reseed.'));
-  const LBL={inflation_cpi_annual_pct:['Inflation (CPI)','%'],gdp_growth_pct:['GDP growth','%'],
-    current_account_pctgdp:['Current account','% GDP'],reserves_usd:['FX reserves','$'],
-    policy_lending_rate_pct:['Lending rate','%'],pop_millions:['Population','']};
+    $('p',{class:'lead'},'Two different clocks, side by side. The World Bank block is ANNUAL and lags by a year or more; the live block is the monthly Pakistan series this terminal actually trades off. They measure different things and will not agree — each tile below shows both so the gap is explicit rather than confusing. Headlines are scraped from the business press on every build.'));
+  // pair each lagging World Bank annual with its live monthly counterpart. These were
+  // previously shown alone, contradicting the site's own ticker (WB lending 8.67%/2021
+  // vs policy 11.5%; WB CPI 3.55%/2025 vs CPI YoY 9.2%) with no explanation.
+  const MS=(D.macro||{}).series||{};
+  const lastOf=k=>{const s=MS[k];return (s&&s.x&&s.x.length)?{v:s.y[s.y.length-1],d:s.x[s.x.length-1]}:null;};
+  const LBL={inflation_cpi_annual_pct:['Inflation (CPI)','%','cpi_yoy','CPI YoY','%'],
+    gdp_growth_pct:['GDP growth','%',null,null,null],
+    current_account_pctgdp:['Current account','% GDP',null,null,null],
+    reserves_usd:['FX reserves','$','fx_reserves_sbp_bn','SBP reserves','$bn'],
+    policy_lending_rate_pct:['Lending rate','%','policy_rate','Policy rate','%'],
+    pop_millions:['Population','',null,null,null]};
   const nc=$('div',{class:'card'});
-  nc.append($('h3',{},'Macro snapshot ',$('span',{class:'tag info'},'World Bank · annual')));
+  nc.append($('h3',{},'Macro snapshot ',$('span',{class:'tag info'},'World Bank annual · lagging'),
+    $('span',{class:'tag warn',style:'margin-left:6px'},'paired with live monthly')));
   const grid=$('div',{class:'grid cols3'});
-  Object.entries(LBL).forEach(([k,[lab,unit]])=>{const v=WB[k];if(!v||v.latest==null)return;
+  Object.entries(LBL).forEach(([k,[lab,unit,livekey,livelab,liveunit]])=>{const v=WB[k];if(!v||v.latest==null)return;
     let val=v.latest; if(k==='reserves_usd')val='$'+(val/1e9).toFixed(1)+'b'; else if(k==='pop_millions')val=(val/1e6).toFixed(0)+'M'; else val=val+unit;
-    grid.append($('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v'},val),$('span',{class:'l'},`${lab} · ${v.latest_year}`))));});
-  nc.append(grid);w.append(nc);
+    const lv=livekey?lastOf(livekey):null;
+    grid.append($('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v'},val),
+      $('span',{class:'l'},`${lab} · WB ${v.latest_year}`)),
+      lv?$('div',{class:'mono',style:'font-size:11.5px;margin-top:4px;border-top:1px solid var(--bd);padding-top:4px'},
+        'live ',$('b',{class:'accent'},`${lv.v}${liveunit}`),$('span',{class:'muted'},` ${livelab} · ${lv.d}`)):null));});
+  nc.append(grid);
+  nc.append($('div',{class:'note'},'The two rows differ by DEFINITION as well as date: World Bank CPI is an annual average (live is monthly year-on-year), WB "lending rate" is a commercial lending rate (live is the SBP policy rate), and WB reserves include gold and all official holdings (live is SBP-held reserves only). Trade off the live row; the WB row is long-run context.'));
+  w.append(nc);
   const hc=$('div',{class:'card',style:'margin-top:16px'});
-  hc.append($('h3',{},'Macro / policy / geopolitical headlines ',$('span',{class:'tag warn'},`as of ${M.as_of||'—'}`)));
+  const stale=M.stale||!(M.headlines||[]).length;
+  hc.append($('h3',{},'Macro / policy / geopolitical headlines ',
+    $('span',{class:'tag '+(stale?'warn':'ok')},stale?`STALE · last good ${M.last_ok||M.as_of||'unknown'}`:`fetched ${M.as_of||'—'}`)));
   const hl=M.headlines||[];
+  if(stale)hc.append($('div',{class:'note',style:'border-left:3px solid var(--down)'},
+    `⚠️ The last scrape returned nothing${M.last_attempt?` (attempted ${M.last_attempt})`:''} — the publisher likely blocked the request. Showing the last good set${M.last_ok?` from ${M.last_ok}`:''}; treat it as out of date. The refresh keeps the previous content rather than blanking the tab.`));
   if(hl.length){const ul=$('div',{});
     hl.forEach(h=>ul.append($('div',{class:'note',style:'border-left:2px solid var(--accent);margin:6px 0;font-size:13px'},h)));
     hc.append(ul);
-  } else hc.append($('div',{class:'muted'},'no headlines (refresh pending)'));
-  hc.append($('div',{class:'note'},'Headlines are AWARENESS from the business press (profit.pakistantoday.com.pk) — context for the macro regime, not a trading signal. Numbers in-text are as-reported. Refreshes weekly via CI.'));
+  } else hc.append($('div',{class:'muted'},'no headlines held — the scrape has never succeeded on this deployment'));
+  hc.append($('div',{class:'note'},`Headlines are AWARENESS from the business press (profit.pakistantoday.com.pk) — context for the macro regime, not a trading signal. Numbers in-text are as-reported and undated beyond the fetch date, so they are NOT usable as point-in-time inputs. Refreshed on every site build (weekdays via CI); the World Bank block refreshes weekly.`));
   w.append(hc);
   return w;
 };
@@ -1295,7 +1362,44 @@ PANELS.Confluence=()=>{
   const tcls=t=>t==='REAL'?'up':t==='FAKEOUT'?'down':'muted';
   const kpi=(v,l,cl='')=>$('div',{class:'card'},$('div',{class:'kpi'},$('span',{class:'v '+cl},v),$('span',{class:'l'},l)));
   w.append($('h2',{class:'sect-title'},'Confluence — Three Variants'),
-    $('p',{class:'lead'},'The capstone, run three ways over the same futures-eligible universe so you can compare like-for-like. Every name is scored by how many independent edges INTERSECT — regime-fit + earnings turnaround + momentum + relative strength + liquidity — and tagged REAL (earnings-backed, hold), FAKEOUT (momentum but earnings falling — scalp with a stop) or WATCH. The three baskets differ only in how they RANK: A raw single score · B raw + earnings-conviction tilt · ★ rank-averaged momentum ensemble. Each is opportunity-gated, inverse-vol weighted, 1-month. Walk-forward 2019-2026, OOS = held-out half, no look-ahead.'));
+    $('p',{class:'lead'},'Every name is scored by how many independent edges INTERSECT — regime-fit + earnings turnaround + momentum + relative strength + liquidity — and tagged REAL (earnings-backed, hold), FAKEOUT (momentum but earnings falling — scalp with a stop) or WATCH. The three baskets differ only in how they RANK: A raw single score · B raw + earnings-conviction tilt · ★ rank-averaged momentum ensemble. Each is opportunity-gated, inverse-vol weighted, 1-month. Walk-forward 2019-2026, OOS = held-out half, no look-ahead.'));
+  // ===== TRADE TICKET — the actual trade, stated before any methodology =====
+  const RV=V[rec]||{};const rp=RV.picks||[];const sh=C.sessions_held||0;
+  const tk=$('div',{class:'card',style:'border-left:3px solid var(--accent)'});
+  tk.append($('h3',{},'The trade ',$('span',{class:'badge '+((C.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},C.action||'—'),
+    $('span',{class:'tag warn',style:'margin-left:8px'},RV.label||rec)));
+  const fld=(l,v,cl)=>$('div',{},$('div',{class:'muted',style:'font-size:10px;letter-spacing:.05em'},l),
+    $('div',{class:'mono '+(cl||''),style:'font-size:14px'},v));
+  tk.append($('div',{style:'display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:8px 0 4px'},
+    fld('BUY AT CLOSE',C.entry_date||'—'),
+    fld('HOLD',C.hold||'1 month'),
+    fld('JUDGED END OF',C.exit_month||'—'),
+    fld('ELAPSED SO FAR',`${sh} session${sh===1?'':'s'}`,sh<5?'down':''),
+    fld('BASKET SO FAR',RV.basket_ret==null?'—':pct(RV.basket_ret,1),cls(RV.basket_ret)),
+    fld('MARKET, SAME WINDOW',C.market_ret==null?'—':pct(C.market_ret,1),cls(C.market_ret))));
+  if(rp.length){
+    const tt=$('table',{style:'margin-top:6px'});
+    tt.append($('thead',{},$('tr',{},...['Symbol','Weight','Entry px','Now','Return','Tag','EPS gr'].map(h=>$('th',{},h)))));
+    const ttb=$('tbody');
+    rp.forEach(p=>ttb.append($('tr',{},
+      $('td',{},$('b',{},p.symbol)),
+      $('td',{class:'num'},(p.weight*100).toFixed(1)+'%'),
+      $('td',{class:'num'},p.entry_close),
+      $('td',{class:'num muted'},p.last_close==null?'—':p.last_close),
+      $('td',{class:'num '+cls(p.ret)},p.ret==null?'—':pct(p.ret,1)),
+      $('td',{},$('span',{class:tcls(p.tag)},p.tag)),
+      $('td',{class:'num '+cls(p.eps_growth)},p.eps_growth==null?'n/a':(p.eps_growth>0?'+':'')+p.eps_growth+'%'))));
+    tt.append(ttb);tk.append($('div',{class:'tablewrap'},tt));}
+  if(sh>0&&sh<10)tk.append($('div',{class:'note',style:'border-left:3px solid var(--down)'},
+    `⚠️ Only ${sh} trading session${sh===1?'':'s'} of a one-month hold has elapsed — the return above is a mark, NOT the month's result. It will move a great deal before ${C.exit_month||'month-end'}.`));
+  // the basket contradicting its own legend is the single most important thing here
+  const fw=RV.fakeout_weight||0;
+  if(fw>0.15){const fk=rp.filter(p=>p.tag==='FAKEOUT');
+    tk.append($('div',{class:'note',style:'border-left:3px solid var(--down)'},
+      `⚠️ ${(fw*100).toFixed(1)}% of this basket sits in names this same engine tags FAKEOUT — "momentum but earnings falling: scalp with a stop, do NOT hold" — yet the trade above is a one-month HOLD. `+
+      fk.map(p=>`${p.symbol} ${(p.weight*100).toFixed(1)}% (EPS ${p.eps_growth==null?'n/a':p.eps_growth+'%'})`).join(' · ')+
+      `. The ranking is momentum-only by design (the earnings tilt cannot be backtested without look-ahead), so the tag is a WARNING the ranker does not act on. Size accordingly.`));}
+  w.append(tk);
   // shared context
   const rc=$('div',{class:'card'});
   rc.append($('h3',{},'Context & signal ',$('span',{class:'badge '+((C.action||'').indexOf('TRADE')===0?'on':'off'),style:'font-size:13px'},C.action||'—')));
@@ -1322,19 +1426,31 @@ PANELS.Confluence=()=>{
   w.append(cmp);
   // shared high-conviction set
   const hc=$('div',{class:'card',style:'margin-top:16px'});
-  hc.append($('h3',{},`High-conviction set — ${C.n_conviction||0} names, 3+ edges aligned`));
   const hv=C.high_conviction||[];
-  if(hv.length){const t=$('table');
-    t.append($('thead',{},$('tr',{},...['Symbol','Tag','Edges','EPS gr','Sector','Aligned'].map(h=>$('th',{},h)))));
+  // header used to claim n_conviction (23) while the table rendered only the top 15
+  hc.append($('h3',{},`Edge-count leaderboard — top ${hv.length} of ${C.n_conviction||hv.length} names with 3+ edges`));
+  // split by tag: a name the engine itself flags FAKEOUT does not belong under a
+  // heading that reads "high conviction" — edge COUNT and conviction are not the same thing
+  const mkTable=(rowsIn)=>{const t=$('table');
+    t.append($('thead',{},$('tr',{},...['Symbol','Tag','Edges','EPS gr','3m mom','Sector','Aligned'].map(h=>$('th',{},h)))));
     const tb=$('tbody');
-    hv.forEach(r=>tb.append($('tr',{style:r.tag==='REAL'?'background:var(--accent-soft)':''},
+    rowsIn.forEach(r=>tb.append($('tr',{style:r.tag==='REAL'?'background:var(--accent-soft)':''},
       $('td',{},$('b',{},r.symbol)),$('td',{},$('span',{class:tcls(r.tag)},r.tag)),
       $('td',{class:'num accent'},r.confluence),
-      $('td',{class:'num '+cls(r.eps_growth)},r.eps_growth==null?'—':(r.eps_growth>0?'+':'')+r.eps_growth+'%'),
+      $('td',{class:'num '+cls(r.eps_growth)},r.eps_growth==null?'n/a':(r.eps_growth>0?'+':'')+r.eps_growth+'%'),
+      $('td',{class:'num muted'},r.mom_3m==null?'—':pct(r.mom_3m,0)),
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},r.sector),
       $('td',{class:'mono muted',style:'text-align:left;font-size:10px'},(r.edges||[]).join(', ')))));
-    t.append(tb);hc.append($('div',{class:'tablewrap'},t));}
-  hc.append($('div',{class:'note'},'Shared across all three variants. REAL = earnings-backed (hold). FAKEOUT = momentum but earnings falling (scalp with a stop, do not hold). WATCH = mixed.'));
+    t.append(tb);return $('div',{class:'tablewrap'},t);};
+  const realRows=hv.filter(r=>r.tag==='REAL'), flagRows=hv.filter(r=>r.tag!=='REAL');
+  if(realRows.length){
+    hc.append($('div',{style:'margin-top:6px;font-weight:600'},`Earnings-backed (REAL) — ${realRows.length}`));
+    hc.append(mkTable(realRows));}
+  if(flagRows.length){
+    hc.append($('div',{style:'margin-top:12px;font-weight:600'},`Flagged — ${flagRows.length} · high edge COUNT but not earnings-backed`));
+    hc.append(mkTable(flagRows));
+    hc.append($('div',{class:'muted',style:'font-size:11px;margin-top:4px'},'These reach 3+ edges on momentum/liquidity/regime with zero fundamental edge. A high edge count here is not conviction — FAKEOUT means earnings are falling behind the price.'));}
+  hc.append($('div',{class:'note'},'Shared across all three variants, ranked by edge count then raw score. REAL = earnings-backed (hold). FAKEOUT = momentum but earnings falling (scalp with a stop, do not hold). WATCH = mixed or no earnings data. Note the EPS figures are a CURRENT snapshot, so they are a live tag, not something the backtest could use.'));
   w.append(hc);
   // per-variant sections
   const section=(k)=>{const v=V[k];if(!v)return;
@@ -1342,7 +1458,12 @@ PANELS.Confluence=()=>{
     const card=$('div',{class:'card',style:'margin-top:16px'+(isRec?';border:1px solid var(--accent)':'')});
     card.append($('h3',{},(v.label||k)+' ',
       isRec?$('span',{class:'tag ok'},'recommended'):'',
-      $('span',{class:'tag warn',style:'margin-left:6px'},`entry ${C.entry_month||'—'} · basket ${v.basket_ret==null?'—':pct(v.basket_ret,1)}`)));
+      $('span',{class:'tag warn',style:'margin-left:6px'},`entry ${C.entry_date||C.entry_month||'—'} → judged end of ${C.exit_month||'—'} · ${C.sessions_held||0}d in`)));
+    card.append($('div',{class:'mono',style:'font-size:12px;margin:2px 0 6px'},
+      'basket ',$('b',{class:cls(v.basket_ret)},v.basket_ret==null?'—':pct(v.basket_ret,1)),
+      '  vs market ',$('b',{class:cls(C.market_ret)},C.market_ret==null?'—':pct(C.market_ret,1)),
+      (v.basket_ret!=null&&C.market_ret!=null)?$('span',{class:'muted'},`  (${v.basket_ret>C.market_ret?'+':''}${((v.basket_ret-C.market_ret)*100).toFixed(1)}pp vs buy & hold)`):null,
+      (v.fakeout_weight>0)?$('span',{class:'down',style:'margin-left:8px'},`· ${(v.fakeout_weight*100).toFixed(0)}% FAKEOUT wt`):null));
     card.append($('div',{class:'grid cols2'},
       kpi(b.sharpe!=null?b.sharpe.toFixed(2):'—','Sharpe (OOS)',isRec?'accent':''),
       kpi(b.calmar!=null?b.calmar.toFixed(2):'—','Calmar (OOS)',isRec?'accent':''),
@@ -1438,15 +1559,26 @@ PANELS.Picker=()=>{
   // this year's live picks
   if(cur&&cur.variants){
     const hc=$('div',{class:'card',style:'margin-top:16px'});
-    hc.append($('h3',{},`${cur.year} picks — entry ${cur.entry_month}, held to ${cur.as_of} `,
-      $('span',{class:'tag warn'},`universe YTD ${cur.universe_ytd==null?'—':pct(cur.universe_ytd,0)}`)));
-    hc.append($('div',{class:'note'},'This year\'s actual start-of-year picks (chosen on Dec data, no hindsight) marked to today. A live, honest read — not a backtest. In a down/choppy year the Turnaround style tends to hold up best; in a strong bull the momentum styles lead.'));
+    hc.append($('h3',{},`${cur.year} picks — bought at the ${cur.entry_month} close, JUDGED 31 Dec ${cur.year} `,
+      $('span',{class:'tag warn'},`marked ${cur.as_of} · NOT final`)));
+    hc.append($('div',{class:'mono',style:'font-size:12.5px;margin:4px 0'},
+      'benchmark to beat — universe (equal-wt) YTD ',
+      $('b',{class:cls(cur.universe_ytd)},cur.universe_ytd==null?'—':pct(cur.universe_ytd,1))));
+    hc.append($('div',{class:'note'},`This year's actual start-of-year picks (chosen on ${cur.entry_month} data, no hindsight), marked to ${cur.as_of} — a live read, not a backtest, and the year is not over. Each basket is compared to the universe on its own card below, so you can see the gap without hunting for it.`));
     w.append(hc);
     ORDER.forEach(k=>{const v=cur.variants[k];if(!v)return;const isRec=(k===rec);
       const card=$('div',{class:'card',style:'margin-top:12px'+(isRec?';border:1px solid var(--accent)':'')});
+      // the old green "all-weather pick" tag implied this style was validated as best.
+      // It is not: `recommended` is a hardcoded default, and on the risk table above
+      // Combined carries the LOWEST Sharpe of all five rows. Label it as the default, not a winner.
       card.append($('h3',{},(v.label||LAB[k])+' ',
-        isRec?$('span',{class:'tag ok'},'all-weather pick'):'',
-        $('span',{class:'tag warn',style:'margin-left:6px'},`basket YTD ${v.basket_ytd==null?'—':pct(v.basket_ytd,0)}`)));
+        isRec?$('span',{class:'tag'},'default choice'):'',
+        $('span',{class:'tag warn',style:'margin-left:6px'},`entry ${cur.entry_month} → 31 Dec ${cur.year}`)));
+      const gap=(v.basket_ytd!=null&&cur.universe_ytd!=null)?(v.basket_ytd-cur.universe_ytd):null;
+      card.append($('div',{class:'mono',style:'font-size:12.5px;margin:2px 0 6px'},
+        'basket YTD ',$('b',{class:cls(v.basket_ytd)},v.basket_ytd==null?'—':pct(v.basket_ytd,1)),
+        '  vs universe ',$('b',{class:cls(cur.universe_ytd)},cur.universe_ytd==null?'—':pct(cur.universe_ytd,1)),
+        gap==null?null:$('span',{class:gap>=0?'up':'down'},`  (${gap>=0?'+':''}${(gap*100).toFixed(1)}pp ${gap>=0?'ahead of':'BEHIND'} just owning the market)`)));
       const bk=v.picks||[];
       if(bk.length){const t=$('table');
         t.append($('thead',{},$('tr',{},...['#','Sym','Sector','EPS tag','Entry','Now','YTD'].map(h=>$('th',{},h)))));

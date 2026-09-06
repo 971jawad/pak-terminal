@@ -92,6 +92,32 @@ def headlines() -> list[str]:
     return out[:40]
 
 
+def refresh_headlines() -> int:
+    """Scrape headlines and write them with the never-clobber guard. Returns the count
+    now on disk. The ONLY writer of headlines.json — build_site.py used to inline its
+    own copy of this, which silently omitted last_ok and produced a file the UI could
+    not tell was stale."""
+    from datetime import date
+    today = date.today().isoformat()
+    hl = headlines()
+    if hl:
+        (OUT / "headlines.json").write_text(
+            json.dumps({"as_of": today, "last_ok": today,
+                        "source": "profit.pakistantoday.com.pk",
+                        "headlines": hl}, indent=None), encoding="utf-8")
+        return len(hl)
+    old = _prev("headlines.json")
+    kept = old.get("headlines") or []
+    (OUT / "headlines.json").write_text(
+        json.dumps({"as_of": old.get("as_of") or old.get("last_ok"),
+                    "last_ok": old.get("last_ok") or old.get("as_of"),
+                    "last_attempt": today, "stale": True,
+                    "source": "profit.pakistantoday.com.pk",
+                    "headlines": kept}, indent=None), encoding="utf-8")
+    print(f"headlines: scrape returned 0, kept {len(kept)} existing (marked stale)")
+    return len(kept)
+
+
 def _prev(name: str) -> dict:
     p = OUT / name
     if not p.exists():
@@ -119,25 +145,8 @@ def main():
         print("world bank: fetch returned nothing, keeping existing worldbank.json")
         wb = _prev("worldbank.json")
 
-    hl = headlines()
-    if hl:
-        (OUT / "headlines.json").write_text(
-            json.dumps({"as_of": today, "last_ok": today,
-                        "source": "profit.pakistantoday.com.pk",
-                        "headlines": hl}, indent=None), encoding="utf-8")
-    else:
-        old = _prev("headlines.json")
-        kept = old.get("headlines") or []
-        # keep last_ok pinned to when the content was actually fetched, and record
-        # the failed attempt separately — never advance as_of past real content
-        (OUT / "headlines.json").write_text(
-            json.dumps({"as_of": old.get("as_of") or old.get("last_ok"),
-                        "last_ok": old.get("last_ok") or old.get("as_of"),
-                        "last_attempt": today, "stale": True,
-                        "source": "profit.pakistantoday.com.pk",
-                        "headlines": kept}, indent=None), encoding="utf-8")
-        print(f"headlines: scrape returned 0, kept {len(kept)} existing (marked stale)")
-        hl = kept
+    n_hl = refresh_headlines()
+    hl = (_prev("headlines.json").get("headlines") or [])
 
     print(f"world bank: {sum(1 for v in wb.values() if 'latest' in v)}/{len(wb)} indicators")
     for k, v in wb.items():

@@ -259,16 +259,43 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
     rows, summary = _annual(mp, piv)
     summary["risk"] = _pathstats(mp, piv)
     current = _current_picks(mp, piv, fu)
+    # Derive the steadiness claim instead of asserting it. The note used to read
+    # "Combined is the steadiest all-weather choice" while Combined actually ranked LAST
+    # of four on Calmar (0.23) and lowest on Sharpe (0.20) — the text contradicted the
+    # risk table rendered directly above it.
+    _risk = summary.get("risk", {})
+    _st = {k: v for k, v in _risk.items() if k != "univ" and isinstance(v, dict)
+           and v.get("calmar") is not None}
+    _LBL = {"turnaround": "Turnaround", "leaders": "Leaders",
+            "quality": "Mom-quality", "combined": "Combined"}
+    if _st:
+        _best = max(_st, key=lambda k: _st[k]["calmar"])
+        _cmb = _st.get("combined", {})
+        _u = _risk.get("univ", {})
+        _steady = (
+            f"On the monthly path the steadiest style is {_LBL.get(_best, _best)} "
+            f"(Calmar {_st[_best]['calmar']:.2f}, maxDD {_st[_best]['maxdd']*100:.0f}%)"
+            + (f", which still only matches the universe (Calmar {_u['calmar']:.2f})."
+               if _u.get("calmar") is not None and _u["calmar"] >= _st[_best]["calmar"]
+               else ".")
+            + (f" COMBINED is the default shown here, NOT a validated winner — it ranks "
+               f"{sorted(_st, key=lambda k: -_st[k]['calmar']).index('combined') + 1} of "
+               f"{len(_st)} on Calmar ({_cmb['calmar']:.2f}) and lowest on Sharpe "
+               f"({_cmb['sharpe']:.2f})." if _cmb.get("calmar") is not None else "")
+        )
+    else:
+        _steady = ""
     return {
         "annual": rows, "summary": summary, "current": current,
         "recommended": "combined",
+        "steadiest": (max(_st, key=lambda k: _st[k]["calmar"]) if _st else None),
         "note": ("PICKER is the year-end race, run once a year and judged Dec 31, tested year-by-"
                  "year (no look-ahead). Honest result: NO style reliably beats owning the whole "
                  "liquid universe — Leaders/Quality roughly tie it over 6 years, Turnaround trails; "
                  "the winner ROTATES with the regime. Top-decile hit rate ~= the 10% base rate, so "
                  "you can't reliably pick THE single biggest surger from price data — the baskets "
-                 "hold monsters but diluted across 15 names. Combined (3-way ensemble) is the "
-                 "steadiest all-weather choice. Not investment advice."),
+                 "hold monsters but diluted across 15 names. " + _steady +
+                 " Not investment advice."),
         "forward_note": ("The frameworks' fundamental/catalyst edges (earnings turnarounds, sector "
                          "policy shocks, war/oil moves) need point-in-time data this project lacks, so "
                          "they are NOT in this backtest. EPS shows only as a live REAL/WATCH tag. To "

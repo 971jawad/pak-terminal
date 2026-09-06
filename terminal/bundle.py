@@ -299,7 +299,11 @@ def _valuator(min_adv):
 def _macro_live():
     wb = _load_json(config.MACRO_DIR / "worldbank.json", {})
     hl = _load_json(config.MACRO_DIR / "headlines.json", {"headlines": [], "as_of": None})
-    return {"worldbank": wb, "headlines": hl.get("headlines", []), "as_of": hl.get("as_of")}
+    # carry the freshness fields through so the tab can show an honest stale/failed
+    # state instead of a fresh-looking date above an empty list
+    return {"worldbank": wb, "headlines": hl.get("headlines", []),
+            "as_of": hl.get("as_of"), "last_ok": hl.get("last_ok"),
+            "last_attempt": hl.get("last_attempt"), "stale": bool(hl.get("stale"))}
 
 
 def _catalyst_feed(min_adv):
