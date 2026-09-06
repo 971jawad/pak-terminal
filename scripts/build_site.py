@@ -20,8 +20,15 @@ def run(args):
 
 
 def main():
+    # --no-fetch means "do not hit the network", NOT "do not refresh the parquet".
+    # fetch_psx.py --no-fetch still re-parses data/raw/ into the vendor parquet, which
+    # matters whenever new raw files arrive WITHOUT a download -- e.g. pulled from the
+    # daily CI commit. Skipping the parse there silently rebuilt the whole terminal on
+    # a stale panel (parquet stuck at 2026-09-01 while raw/ already held Sep 2-4).
     if "--no-fetch" not in sys.argv:
         run([str(ROOT / "scripts" / "fetch_psx.py")])
+    else:
+        run([str(ROOT / "scripts" / "fetch_psx.py"), "--no-fetch"])
     # live strategy result (regime + picks + backtest) — the daily-changing part
     run(["-c", "import sys,json; sys.path.insert(0,'.'); "
                 "from analysis import strategy as S; "
