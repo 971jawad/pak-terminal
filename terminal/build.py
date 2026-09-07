@@ -1609,7 +1609,7 @@ PANELS.Final=()=>{
   const V=F.validation||{};
   w.append($('div',{class:'card'},
     $('h2',{},'Final — the one sleeve that survived'),
-    $('div',{class:'sub'},`Equal-weight top-${F.K||20} of the liquid universe (ADV > ${Math.round((F.min_adv||2e7)/1e6)}m PKR) by trend + breakout + volume confirmation. Out of 10 rule composites, Ridge/GBM/MLP, a blended ensemble, a surge classifier, 6 trader configs, 3 basket sizes, 3 blend weights and a regime gate, this is the ONLY configuration that beat simply owning the universe on a RISK-ADJUSTED basis in BOTH halves — including 2020-22, when the universe itself lost money.`)));
+    $('div',{class:'sub'},`Equal-weight top-${F.K||20} of the liquid universe (ADV > ${Math.round((F.min_adv||2e7)/1e6)}m PKR) by trend + breakout + volume confirmation, INVERSE-VOLATILITY weighted. Out of 10 rule composites, Ridge/GBM/MLP, a blended ensemble, a surge classifier, 6 trader configs, 3 basket sizes, 3 blend weights and a regime gate, this is the ONLY configuration that beat simply owning the universe on a RISK-ADJUSTED basis in BOTH halves — including 2020-22, when the universe itself lost money.`)));
 
   ['W','M'].forEach(fk=>{
     const V1=V[fk]; if(!V1)return;
@@ -1643,7 +1643,7 @@ PANELS.Final=()=>{
     c.append($('h3',{},fk==='W'?'Live weekly basket':'Live monthly basket',
       $('span',{class:'tag warn',style:'margin-left:8px'},`entry ${L.entry_date} → ${L.as_of} · ${L.days_held}d · ${L.n_universe} eligible`)));
     const t=$('table');
-    t.append($('thead',{},$('tr',{},...['#','Symbol','Sector','Entry px','ADV','Return'].map(h=>$('th',{},h)))));
+    t.append($('thead',{},$('tr',{},...['#','Symbol','Sector','Entry px','ADV','Weight','Return'].map(h=>$('th',{},h)))));
     const b=$('tbody');
     L.legs.forEach((l,i)=>b.append($('tr',{},
       $('td',{class:'num muted'},i+1),
@@ -1651,14 +1651,37 @@ PANELS.Final=()=>{
       $('td',{class:'muted',style:'text-align:left;font-size:11px'},l.sector),
       $('td',{class:'num'},l.entry),
       $('td',{class:'num muted'},l.adv_m+'m'),
+      $('td',{class:'num muted'},l.weight==null?'—':(l.weight*100).toFixed(1)+'%'),
       $('td',{class:'num '+cls(l.ret)},l.ret==null?'—':pct(l.ret,1)))));
     t.append(b);c.append($('div',{class:'tablewrap'},t));
-    if(L.basket_ret!=null)c.append($('div',{class:'kpi',style:'margin-top:10px'},
-      $('span',{class:'v '+cls(L.basket_ret)},pct(L.basket_ret,1)),
-      $('span',{class:'l'},`equal-weight basket since ${L.entry_date} (${L.days_held}d, partial period)`)));
+    const kk=$('div',{class:'grid cols2',style:'margin-top:10px'});
+    if(L.basket_ret_volwt!=null)kk.append($('div',{class:'card'},$('div',{class:'kpi'},
+      $('span',{class:'v '+cls(L.basket_ret_volwt)},pct(L.basket_ret_volwt,1)),
+      $('span',{class:'l'},`VOL-TARGETED (what is actually traded) · since ${L.entry_date}, ${L.days_held}d`))));
+    if(L.basket_ret!=null)kk.append($('div',{class:'card'},$('div',{class:'kpi'},
+      $('span',{class:'v muted'},pct(L.basket_ret,1)),
+      $('span',{class:'l'},'equal-weight, for comparison only'))));
+    c.append(kk);
     w.append(c);
   });
 
+  const SA=F.selection_alpha||{};
+  if(SA.W||SA.M){
+    const ac=$('div',{class:'card',style:'margin-top:16px'});
+    ac.append($('h3',{},'How much is skill, how much is just the market?'));
+    ac.append($('div',{class:'note'},'Long the basket and short the universe cancels the market out, leaving only what the SELECTION contributed. Most of the headline CAGR is beta — this is the part the picks actually earn.'));
+    const t=$('table');
+    t.append($('thead',{},$('tr',{},...['Rebalance','Selection alpha (CAGR)','Sharpe','vol','max DD'].map(h=>$('th',{},h)))));
+    const b=$('tbody');
+    [['W','Weekly'],['M','Monthly']].forEach(([k,nm])=>{const d=SA[k];if(!d)return;
+      b.append($('tr',{},$('td',{style:'text-align:left'},nm),
+        $('td',{class:'num '+cls(d.cagr)},pct(d.cagr,1)),
+        $('td',{class:'num'},d.sharpe.toFixed(2)),
+        $('td',{class:'num muted'},pct(d.vol,1)),
+        $('td',{class:'num down'},pct(d.maxdd,1))));});
+    t.append(b);ac.append($('div',{class:'tablewrap'},t));
+    w.append(ac);
+  }
   const rc=$('div',{class:'card',style:'margin-top:16px;border-left:3px solid var(--down)'});
   rc.append($('h3',{},'What was tested and REJECTED'));
   rc.append($('div',{class:'note'},'Listed because a write-up that shows only the winner is a sales document. Each of these looked good somewhere and failed where it counted.'));
