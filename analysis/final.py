@@ -42,6 +42,13 @@ COST_RT = 0.006
 # on the dev half, with max drawdown cut in every case. It is risk parity, not a fitted
 # parameter -- one wild name can no longer dominate a 20-name basket.
 VOL_TARGET = True
+# HYSTERESIS. A holding is kept until it falls out of the top 2K, instead of being sold
+# the moment it slips past rank K. This halves turnover (monthly 55% -> 30%, weekly 31%
+# -> 11%) and therefore the cost drag, and it improved Sharpe in BOTH halves at BOTH
+# frequencies. It is not a tuned number: the ENTIRE neighbourhood works (monthly dev
+# Sharpe 1.02/1.10/1.18/1.23/1.34 at buffer 25/30/35/40/50 vs 0.94 with no buffer), which
+# is what a real effect looks like as opposed to a lone spike.
+BUFFER_MULT = 2
 # The validation ran on a 20m PKR ADV floor, NOT config.MIN_ADV (5m). Publishing picks
 # from a looser universe than the one that was actually backtested would silently break
 # the link between the reported Sharpe and the names shown, so the floor is pinned here.
@@ -52,15 +59,15 @@ FE = ["r_3m", "r_6m", "dist_hi", "vol_z", "adv_growth", "r_1m", "max20",
 # Validated out-of-sample record. DEV = 2020-06..2022-12 (a FALLING market, and the
 # half this config was NOT selected on); TEST = 2023-01..2026-08. Net of 0.6% rt cost.
 VALIDATION = {
-    "W": {"dev":  {"strat": {"cagr": 0.190, "sharpe": 0.94, "maxdd": -0.138, "calmar": 1.38},
+    "W": {"dev":  {"strat": {"cagr": 0.238, "sharpe": 1.16, "maxdd": -0.130, "calmar": 1.83},
                    "univ":  {"cagr": 0.084, "sharpe": 0.44, "maxdd": -0.358, "calmar": 0.23}},
-          "test": {"strat": {"cagr": 0.474, "sharpe": 1.75, "maxdd": -0.231, "calmar": 2.06},
+          "test": {"strat": {"cagr": 0.487, "sharpe": 1.78, "maxdd": -0.245, "calmar": 1.99},
                    "univ":  {"cagr": 0.386, "sharpe": 1.39, "maxdd": -0.278, "calmar": 1.39}},
           "catch": {"lift": 2.09, "rate": 0.221, "base": 0.106, "p": 0.000},
           "periods": {"dev": 130, "test": 191}},
-    "M": {"dev":  {"strat": {"cagr": 0.216, "sharpe": 0.94, "maxdd": -0.109, "calmar": 1.99},
+    "M": {"dev":  {"strat": {"cagr": 0.278, "sharpe": 1.23, "maxdd": -0.095, "calmar": 2.93},
                    "univ":  {"cagr": 0.048, "sharpe": 0.30, "maxdd": -0.356, "calmar": 0.13}},
-          "test": {"strat": {"cagr": 0.522, "sharpe": 1.71, "maxdd": -0.211, "calmar": 2.47},
+          "test": {"strat": {"cagr": 0.566, "sharpe": 1.85, "maxdd": -0.219, "calmar": 2.59},
                    "univ":  {"cagr": 0.416, "sharpe": 1.43, "maxdd": -0.266, "calmar": 1.56}},
           "catch": {"lift": 1.71, "rate": 0.182, "base": 0.106, "p": 0.001},
           "periods": {"dev": 18, "test": 44}},
@@ -83,6 +90,16 @@ REJECTED = [
     {"what": "'not exhausted' and sector-cohort clauses",
      "why": "top of the dev half (lift 2.13) and insignificant out-of-sample "
             "(lift 1.16, p=0.24)."},
+    {"what": "portfolio-level volatility targeting",
+     "why": "scaling exposure to a constant vol target ADDED volatility and cut Sharpe "
+            "in both halves (weekly dev 0.94->0.69, monthly dev 0.94->0.67). Levering up "
+            "after quiet stretches bought straight into the next drawdown."},
+    {"what": "sector-neutral selection (best 2 per sector)",
+     "why": "forcing sector spread cut Sharpe in both halves (weekly dev 0.94->0.61). The "
+            "concentration is informative -- when refineries all rank top, that IS the signal."},
+    {"what": "overlapping tranches and drawdown throttling",
+     "why": "neutral to slightly negative once costs were charged; neither cleared the "
+            "both-halves bar."},
     {"what": "meta-labelling filter (drop the weak half of the basket)",
      "why": "a second-stage classifier trained walk-forward on past picks made things "
             "WORSE at every threshold: cutting the 20 names to ~11 took weekly Sharpe "
@@ -158,11 +175,29 @@ def live(freq: str = "W", K: int = K_DEFAULT, min_adv: float = MIN_ADV) -> dict:
     latest = data.latest_date()
     # never rank on a period that has not finished yet
     entry_p = pers[-1] if pers[-1].end_time.date() <= latest.date() else pers[-2]
+    # Replay the hysteresis rule forward through history so today's holdings are exactly
+    # what the backtested rule would be holding now -- a stateless "top K today" basket
+    # would NOT match the record above it.
+    hold, buf = [], K * BUFFER_MULT
+    for per in pers:
+        d = snap[(snap._per == per) & snap.univ]
+        if len(d) < K:
+            continue
+        d = d.assign(score=_score(d))
+        d = d.assign(rk=d["score"].rank(ascending=False))
+        keep = [x for x in hold if x in set(d.loc[d.rk <= buf, "symbol"])]
+        add = [x for x in d.nlargest(K, "score").symbol if x not in keep]
+        hold = (keep + add[: max(0, K - len(keep))])[:K]
+        if per == entry_p:
+            break
     cur = snap[(snap._per == entry_p) & snap.univ].copy()
     if len(cur) < K:
         return {}
     cur["score"] = _score(cur)
-    top = cur.nlargest(K, "score")
+    top = cur[cur.symbol.isin(hold)].copy()
+    if len(top) < K:                       # first periods, before the book fills
+        top = cur.nlargest(K, "score")
+    top = top.sort_values("score", ascending=False)
     entry_date = cur.date.max()
     cuml = data.load_prices().set_index(["symbol", "date"])["cumlog"]
     fresh = bool(entry_date == latest)      # rolled today -> nothing elapsed yet
@@ -198,6 +233,7 @@ def live(freq: str = "W", K: int = K_DEFAULT, min_adv: float = MIN_ADV) -> dict:
 def build() -> dict:
     out = {"validation": VALIDATION, "rejected": REJECTED,
            "selection_alpha": SELECTION_ALPHA, "vol_target": VOL_TARGET,
+           "buffer_rank": K_DEFAULT * BUFFER_MULT,
            "cost_rt": COST_RT, "K": K_DEFAULT, "min_adv": MIN_ADV}
     for f in ("W", "M"):
         try:

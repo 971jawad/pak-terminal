@@ -1609,7 +1609,7 @@ PANELS.Final=()=>{
   const V=F.validation||{};
   w.append($('div',{class:'card'},
     $('h2',{},'Final — the one sleeve that survived'),
-    $('div',{class:'sub'},`Equal-weight top-${F.K||20} of the liquid universe (ADV > ${Math.round((F.min_adv||2e7)/1e6)}m PKR) by trend + breakout + volume confirmation, INVERSE-VOLATILITY weighted. Out of 10 rule composites, Ridge/GBM/MLP, a blended ensemble, a surge classifier, 6 trader configs, 3 basket sizes, 3 blend weights and a regime gate, this is the ONLY configuration that beat simply owning the universe on a RISK-ADJUSTED basis in BOTH halves — including 2020-22, when the universe itself lost money.`)));
+    $('div',{class:'sub'},`Equal-weight top-${F.K||20} of the liquid universe (ADV > ${Math.round((F.min_adv||2e7)/1e6)}m PKR) by trend + breakout + volume confirmation, INVERSE-VOLATILITY weighted, and held until a name drops out of the top ${(F.buffer_rank||40)} rather than sold the moment it slips past ${F.K||20}. Out of 10 rule composites, Ridge/GBM/MLP, a blended ensemble, a surge classifier, 6 trader configs, 3 basket sizes, 3 blend weights and a regime gate, this is the ONLY configuration that beat simply owning the universe on a RISK-ADJUSTED basis in BOTH halves — including 2020-22, when the universe itself lost money.`)));
 
   ['W','M'].forEach(fk=>{
     const V1=V[fk]; if(!V1)return;
