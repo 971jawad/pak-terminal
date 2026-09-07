@@ -13,6 +13,7 @@ import pandas as pd
 from pakterm import config, data
 from analysis import regime, connections, events, sentiment, surges, mood, predictor, flows
 from analysis import analysis_filter, surger, catalysts, harvester, sniper, confluence, picker, valuator
+from analysis import final as final_mod
 from analysis import futures_predictor as _F
 
 
@@ -184,6 +185,7 @@ def build_bundle(min_adv: float = config.MIN_ADV) -> dict:
         "picker": _picker(min_adv),                                 # Alpha-Engine frameworks, 4 style variants
         "valuator": _valuator(min_adv),                             # regime gate + sector catalyst + surge radar
         "consensus": _consensus(strat, surg_res),                   # cross-model agreement filter
+        "final": _final(),                                          # the sleeve that survived both halves
     }
     return bundle
 
@@ -287,6 +289,14 @@ def _picker(min_adv):
         return picker.live_result(min_adv)
     except Exception as e:
         return {"variants": {}, "note": f"unavailable ({type(e).__name__})"}
+
+
+def _final():
+    """The one configuration that beat the universe risk-adjusted in BOTH halves."""
+    try:
+        return final_mod.build()
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"}
 
 
 def _valuator(min_adv):

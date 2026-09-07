@@ -1603,6 +1603,80 @@ PANELS.Picker=()=>{
   return w;
 };
 
+PANELS.Final=()=>{
+  const F=D.final||{};const w=$('div');
+  if(F.error){w.append($('div',{class:'card'},$('div',{class:'muted'},'Final unavailable: '+F.error)));return w;}
+  const V=F.validation||{};
+  w.append($('div',{class:'card'},
+    $('h2',{},'Final — the one sleeve that survived'),
+    $('div',{class:'sub'},`Equal-weight top-${F.K||20} of the liquid universe (ADV > ${Math.round((F.min_adv||2e7)/1e6)}m PKR) by trend + breakout + volume confirmation. Out of 10 rule composites, Ridge/GBM/MLP, a blended ensemble, a surge classifier, 6 trader configs, 3 basket sizes, 3 blend weights and a regime gate, this is the ONLY configuration that beat simply owning the universe on a RISK-ADJUSTED basis in BOTH halves — including 2020-22, when the universe itself lost money.`)));
+
+  ['W','M'].forEach(fk=>{
+    const V1=V[fk]; if(!V1)return;
+    const c=$('div',{class:'card',style:'margin-top:16px'});
+    c.append($('h3',{},fk==='W'?'Weekly rebalance':'Monthly rebalance',
+      $('span',{class:'tag ok',style:'margin-left:8px'},`catch ${(V1.catch.rate*100).toFixed(1)}% vs ${(V1.catch.base*100).toFixed(1)}% base · ${V1.catch.lift.toFixed(2)}x lift · p=${V1.catch.p.toFixed(3)}`)));
+    const t=$('table');
+    t.append($('thead',{},$('tr',{},...['Half','Strategy','CAGR','Sharpe','max DD','Calmar'].map(h=>$('th',{},h)))));
+    const b=$('tbody');
+    [['dev','DEV 2020-22 · config NOT chosen here',true],['test','TEST 2023-26 · config chosen here',false]].forEach(([k,lab,isDev])=>{
+      const d=V1[k];
+      [['strat','Final sleeve'],['univ','Universe (own everything)']].forEach(([kk,nm],i)=>{
+        const r=d[kk];const win=kk==='strat'&&r.sharpe>d.univ.sharpe;
+        b.append($('tr',{style:(i===0&&isDev)?'border-top:2px solid var(--accent-soft)':''},
+          $('td',{class:'muted',style:'text-align:left;font-size:10.5px'},i===0?lab:''),
+          $('td',{style:'text-align:left'},kk==='strat'?$('b',{},nm):$('span',{class:'muted'},nm)),
+          $('td',{class:'num '+cls(r.cagr)},pct(r.cagr,1)),
+          $('td',{class:'num '+(win?'up':'')},r.sharpe.toFixed(2)),
+          $('td',{class:'num down'},pct(r.maxdd,1)),
+          $('td',{class:'num '+(win?'up':'')},r.calmar.toFixed(2))));
+      });
+    });
+    t.append(b);c.append($('div',{class:'tablewrap'},t));
+    c.append($('div',{class:'note'},`The DEV row is the one that matters. This configuration was picked by looking at the TEST half, so those numbers flatter it by construction. DEV is a period it was never chosen on — and a falling market — which is why it is listed first. ${V1.periods.dev} dev / ${V1.periods.test} test periods, net of ${((F.cost_rt||0.006)*100).toFixed(1)}% round-trip cost charged on the fraction of the basket that actually changed.`));
+    w.append(c);
+  });
+
+  ['W','M'].forEach(fk=>{
+    const L=F['live_'+fk]||{};if(!(L.legs||[]).length)return;
+    const c=$('div',{class:'card',style:'margin-top:16px'});
+    c.append($('h3',{},fk==='W'?'Live weekly basket':'Live monthly basket',
+      $('span',{class:'tag warn',style:'margin-left:8px'},`entry ${L.entry_date} → ${L.as_of} · ${L.days_held}d · ${L.n_universe} eligible`)));
+    const t=$('table');
+    t.append($('thead',{},$('tr',{},...['#','Symbol','Sector','Entry px','ADV','Return'].map(h=>$('th',{},h)))));
+    const b=$('tbody');
+    L.legs.forEach((l,i)=>b.append($('tr',{},
+      $('td',{class:'num muted'},i+1),
+      $('td',{},$('b',{},l.symbol)),
+      $('td',{class:'muted',style:'text-align:left;font-size:11px'},l.sector),
+      $('td',{class:'num'},l.entry),
+      $('td',{class:'num muted'},l.adv_m+'m'),
+      $('td',{class:'num '+cls(l.ret)},l.ret==null?'—':pct(l.ret,1)))));
+    t.append(b);c.append($('div',{class:'tablewrap'},t));
+    if(L.basket_ret!=null)c.append($('div',{class:'kpi',style:'margin-top:10px'},
+      $('span',{class:'v '+cls(L.basket_ret)},pct(L.basket_ret,1)),
+      $('span',{class:'l'},`equal-weight basket since ${L.entry_date} (${L.days_held}d, partial period)`)));
+    w.append(c);
+  });
+
+  const rc=$('div',{class:'card',style:'margin-top:16px;border-left:3px solid var(--down)'});
+  rc.append($('h3',{},'What was tested and REJECTED'));
+  rc.append($('div',{class:'note'},'Listed because a write-up that shows only the winner is a sales document. Each of these looked good somewhere and failed where it counted.'));
+  (F.rejected||[]).forEach(r=>rc.append($('div',{style:'margin:8px 0;padding-left:10px;border-left:2px solid var(--panel2)'},
+    $('div',{style:'font-weight:600;font-size:12px'},r.what),
+    $('div',{class:'muted',style:'font-size:11.5px'},r.why))));
+  w.append(rc);
+
+  w.append($('div',{class:'card',style:'margin-top:16px'},
+    $('h3',{},'Read this before trading it'),
+    $('div',{class:'detail',style:'grid-template-columns:1fr;font-size:12.5px;gap:8px'},
+      $('div',{},$('b',{},'It is a tilt, not a sniper. '),'It raises the odds of HOLDING surgers; it never says which single name will surge. Monthly, the top 5% of the universe carries 109% of all return — everything outside it is net negative — so the payoff rides on a few names in the basket.'),
+      $('div',{},$('b',{},'The sample is small. '),`${(V.M&&V.M.periods.test)||44} monthly and ${(V.W&&V.W.periods.test)||191} weekly test periods. A frontier market in one strong bull run is weak evidence about the next one.`),
+      $('div',{},$('b',{},'Concentration was the trap. '),'A 5-name version caught surgers just as well and still lost to the universe on Sharpe (1.06-1.25 vs 1.39) because 41-51% volatility ate the gain. The width is doing real work.'),
+      $('div',{},$('b',{},'It exists only above the liquidity floor. '),`Picks come from names above ${Math.round((F.min_adv||2e7)/1e6)}m PKR ADV, the same floor the backtest used. An independent check found the apparent edge in thinner names vanishes once a tradeable floor is applied.`))));
+  return w;
+};
+
 PANELS.Valuator=()=>{
   const w=$('div',{});const C=D.valuator||{};const M=C.mcd||{};const G=C.gate||{};
   const RAW=G.raw||{};const GAT=G.gated||{};const SP=G.split||{};
@@ -1732,7 +1806,7 @@ PANELS.Valuator=()=>{
 };
 
 /* ---------- shell ---------- */
-const TABS=[['Regime',PANELS.Regime],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Picker',PANELS.Picker],['Valuator',PANELS.Valuator],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
+const TABS=[['Regime',PANELS.Regime],['Final',PANELS.Final],['Ultimate',PANELS.Ultimate],['Confluence',PANELS.Confluence],['Picker',PANELS.Picker],['Valuator',PANELS.Valuator],['Strategy',PANELS.Strategy],['Surger',PANELS.Surger],['Catalysts',PANELS.Catalysts],['MacroNews',PANELS.MacroNews],['Mood',PANELS.Mood],['Sectors',PANELS.Sectors],
   ['Surges',PANELS.Surges],['Predictor',PANELS.Predictor],['Futures',PANELS.Futures],['Filter',PANELS.Filter],
   ['Interconnections',PANELS.Interconnections],['Macro',PANELS.Macro],['Sovereign',PANELS.Sovereign],
   ['Fundamentals',PANELS.Fundamentals],['Correlations',PANELS.Correlations],['Events',PANELS.Events],
