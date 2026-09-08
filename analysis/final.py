@@ -113,6 +113,28 @@ REJECTED = [
      "why": "dropping the top decile of last-month returns outright cut monthly dev Sharpe "
             "1.23 -> 0.98 and weekly 1.16 -> 0.60. De-weighting them helps; banning them "
             "does not, because the hardest-running name sometimes keeps running."},
+    {"what": "HMM / Gaussian-mixture regime clustering",
+     "why": "a 3-state mixture over (return, volatility, drawdown), refitted on an "
+            "expanding past window, LOST to the plain 'is price above its moving average' "
+            "gate (weekly test Sharpe 1.88 vs 2.15). Latent states did not beat the "
+            "obvious one."},
+    {"what": "triple-barrier labelling (Lopez de Prado)",
+     "why": "81-85% of labels came back TIMEOUT -- at these horizons PSX names drift "
+            "rather than resolve, so the barriers rarely bind and carry little "
+            "information. Ranking on P(target before stop) was far worse (monthly dev "
+            "Sharpe 1.05 vs 1.39); blending it in was bull-half-only."},
+    {"what": "fractional differentiation (d=0.4) as a memory-preserving feature",
+     "why": "no improvement at either frequency (monthly test 2.19 vs 2.28). The "
+            "stationarity gain bought nothing the existing momentum ranks did not have."},
+    {"what": "single-stock-futures basis as a leverage-demand signal",
+     "why": "DATA-BLOCKED, not tested: PSX daily market-summary files contain no SSF "
+            "contracts, and futures_summary / dfc_summary / mts_summary all 404. Would "
+            "need a different source."},
+    {"what": "fractional-Kelly exposure sizing",
+     "why": "genuinely passes both halves (weekly dev Sharpe 1.41->1.83, test 2.15->2.42) "
+            "but cuts weekly test CAGR +48.5% -> +32.2%. Since this book cannot easily be "
+            "levered back up, a third of the return is a real price for the smoothness. "
+            "Left OUT by choice rather than by failure -- available as a toggle."},
     {"what": "portfolio-level volatility targeting",
      "why": "scaling exposure to a constant vol target ADDED volatility and cut Sharpe "
             "in both halves (weekly dev 0.94->0.69, monthly dev 0.94->0.67). Levering up "
