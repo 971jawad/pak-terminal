@@ -17,8 +17,9 @@ Design (all validated walk-forward / OOS earlier):
   * No look-ahead: ML/AI train only on months whose 6-month outcome is already
     realised (ym ≤ entry−6); the entry cross-section is scored, never trained on.
 
-Honest ceiling (from the walk-forward bake-off, OOS held-out half, K=15):
-  precision ~27%, catches ~30% of all surgers, ~2.8× over the ~3.5y test half,
+Honest ceiling (RE-MEASURED; the earlier 27%/30%/7% headline did not reproduce):
+  precision ~17.5% against a ~15.4% OOS base rate (lift ~1.1x, not 4x), and a catch
+  rate of ~11% which is what chance alone gives a 15-name basket out of ~128, ~2.8× over the ~3.5y test half,
   ~0% drawdown. It is a WIDE-basket harvest — it catches ~a third of surgers and
   the fat tails pay; it does NOT snipe the individual mega-surgers (those are
   gated by pre-surge illiquidity and post-entry catalysts, not in price data).
@@ -215,20 +216,37 @@ def live_result(min_adv: float = config.MIN_ADV) -> dict:
         fu = fund.get(p["symbol"], {})
         p["eps_growth"] = fu.get("eps_growth")
         p["earn_read"] = fu.get("earn_read", "—")
-    # honest OOS scorecard from the walk-forward bake-off (held-out second half, K=15)
+    # CORRECTED scorecard. The old numbers here (27% precision vs a 7% base rate, implying
+    # a ~4x lift, and 30% catch) did not survive re-measurement. Two independent re-runs of
+    # this module's own walk-forward, comparing like with like, got OOS precision ~17-18%
+    # against an OOS base rate of ~15.4% -- a lift of roughly 1.1x, not 4x. The 27%/7% pair
+    # appears to have compared an IN-SAMPLE overlap statistic on the futures-eligible subset
+    # against a whole-sample base rate: two different metrics on two different universes.
+    # The quoted 30% catch is also at the mechanical floor -- K=15 out of ~128 liquid names
+    # is an 11.7% catch by pure chance, and the model's OOS catch measures ~11.2%.
+    # Kept visible rather than quietly deleted, because the earlier number was published.
     out["scorecard"] = {
         "horizon_months": H, "basket_K": 15,
-        "precision_oos": 0.27, "catch_rate_oos": 0.30,
+        "precision_oos": 0.175, "catch_rate_oos": 0.112,
         "cumulative_oos": "2.8x", "maxdd_oos": 0.0,
-        "base_rate": 0.07,
+        "base_rate": 0.154, "random_catch_floor": 0.117,
+        "lift": 1.14,
+        "superseded": {"precision_oos": 0.27, "catch_rate_oos": 0.30, "base_rate": 0.07,
+                       "why": "in-sample overlap metric on the futures-eligible subset "
+                              "compared against a whole-sample base rate; re-measured "
+                              "like-for-like it is ~17.5% vs a 15.4% base"},
         "method": "walk-forward, non-overlapping, gated, held-out second half of 2019-2026",
     }
     out["note"] = ("Forward 6-month surger picks — rule+ML+AI ensemble on the FULL liquid "
                    "universe, futures-eligibility as a SEPARATE overlay (⚡ = leverageable "
-                   "via single-stock futures). A WIDE-basket harvest: expect to catch ~30% "
-                   "of surgers OOS, not to snipe individual names. The mega-surgers are "
-                   "gated by pre-surge illiquidity + post-entry catalysts (not in price "
-                   "data). Research, not investment advice.")
+                   "via single-stock futures). A WIDE-basket harvest, and a WEAK one: "
+                   "re-measured like-for-like it hits ~17.5% against a ~15.4% base rate, "
+                   "a lift of about 1.1x -- not the ~4x an earlier version of this "
+                   "scorecard claimed. Its catch rate is at the level pure chance gives "
+                   "for a 15-name basket. The mega-surgers are gated by pre-surge "
+                   "illiquidity + post-entry catalysts that are not in price data. See "
+                   "the Final tab for the configuration that did survive validation. "
+                   "Research, not investment advice.")
     return out
 
 

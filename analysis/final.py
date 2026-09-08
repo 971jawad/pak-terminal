@@ -49,6 +49,19 @@ VOL_TARGET = True
 # Sharpe 1.02/1.10/1.18/1.23/1.34 at buffer 25/30/35/40/50 vs 0.94 with no buffer), which
 # is what a real effect looks like as opposed to a lone spike.
 BUFFER_MULT = 2
+# EXHAUSTION PENALTY. Subtract the rank of last period's return, so a name that just went
+# vertical is de-weighted rather than chased. PRL and CNERGY both surged in August and are
+# giving it back now -- the score used to buy them anyway. Soft, NOT a hard exclusion:
+# dropping the top decile outright wrecked the dev half (Sharpe 1.23 -> 0.95), because the
+# hardest-running name sometimes keeps running. Weight 1.0 is the only value that passes
+# both halves at both frequencies, and it matches the unit weight of the score's other terms.
+EXHAUST_PEN = 1.0
+# REGIME SCALING. Position = trend_exposure * basket + (1 - exposure) * cash, using the
+# project's ONE out-of-sample-verified edge (regime.ensemble_signal, a 4-MA trend ensemble).
+# This is the single biggest improvement found: monthly Sharpe 1.25 -> 1.39 dev and
+# 2.01 -> 2.28 test, with test max drawdown cut from -23.7% to -5.9%. Exposure ran 0.15
+# through the 2022 bear and 0.88-0.91 through the 2024-25 bull, which is the whole point.
+REGIME_SCALE = True
 # The validation ran on a 20m PKR ADV floor, NOT config.MIN_ADV (5m). Publishing picks
 # from a looser universe than the one that was actually backtested would silently break
 # the link between the reported Sharpe and the names shown, so the floor is pinned here.
@@ -59,15 +72,15 @@ FE = ["r_3m", "r_6m", "dist_hi", "vol_z", "adv_growth", "r_1m", "max20",
 # Validated out-of-sample record. DEV = 2020-06..2022-12 (a FALLING market, and the
 # half this config was NOT selected on); TEST = 2023-01..2026-08. Net of 0.6% rt cost.
 VALIDATION = {
-    "W": {"dev":  {"strat": {"cagr": 0.238, "sharpe": 1.16, "maxdd": -0.130, "calmar": 1.83},
+    "W": {"dev":  {"strat": {"cagr": 0.233, "sharpe": 1.41, "maxdd": -0.150, "calmar": 1.55},
                    "univ":  {"cagr": 0.084, "sharpe": 0.44, "maxdd": -0.358, "calmar": 0.23}},
-          "test": {"strat": {"cagr": 0.487, "sharpe": 1.78, "maxdd": -0.245, "calmar": 1.99},
+          "test": {"strat": {"cagr": 0.485, "sharpe": 2.15, "maxdd": -0.115, "calmar": 4.22},
                    "univ":  {"cagr": 0.386, "sharpe": 1.39, "maxdd": -0.278, "calmar": 1.39}},
           "catch": {"lift": 2.09, "rate": 0.221, "base": 0.106, "p": 0.000},
           "periods": {"dev": 130, "test": 191}},
-    "M": {"dev":  {"strat": {"cagr": 0.278, "sharpe": 1.23, "maxdd": -0.095, "calmar": 2.93},
+    "M": {"dev":  {"strat": {"cagr": 0.294, "sharpe": 1.39, "maxdd": -0.061, "calmar": 4.84},
                    "univ":  {"cagr": 0.048, "sharpe": 0.30, "maxdd": -0.356, "calmar": 0.13}},
-          "test": {"strat": {"cagr": 0.566, "sharpe": 1.85, "maxdd": -0.219, "calmar": 2.59},
+          "test": {"strat": {"cagr": 0.497, "sharpe": 2.28, "maxdd": -0.059, "calmar": 8.47},
                    "univ":  {"cagr": 0.416, "sharpe": 1.43, "maxdd": -0.266, "calmar": 1.56}},
           "catch": {"lift": 1.71, "rate": 0.182, "base": 0.106, "p": 0.001},
           "periods": {"dev": 18, "test": 44}},
@@ -90,6 +103,16 @@ REJECTED = [
     {"what": "'not exhausted' and sector-cohort clauses",
      "why": "top of the dev half (lift 2.13) and insignificant out-of-sample "
             "(lift 1.16, p=0.24)."},
+    {"what": "sector-cohort tilt (the last selection lead)",
+     "why": "a killed research agent found hot-sector tilting lifted 6-month OOS precision "
+            "17.9%->24.4% at p=0.000 against a sector-label permutation null. Retested "
+            "cleanly on this system it fails every formulation -- tilts, top-N sector "
+            "restriction and cold-avoidance all lose in the dev half. Its own author "
+            "flagged why: the effect was absent in-sample, i.e. bull-run only."},
+    {"what": "HARD exclusion of recently-surged names",
+     "why": "dropping the top decile of last-month returns outright cut monthly dev Sharpe "
+            "1.23 -> 0.98 and weekly 1.16 -> 0.60. De-weighting them helps; banning them "
+            "does not, because the hardest-running name sometimes keeps running."},
     {"what": "portfolio-level volatility targeting",
      "why": "scaling exposure to a constant vol target ADDED volatility and cut Sharpe "
             "in both halves (weekly dev 0.94->0.69, monthly dev 0.94->0.67). Levering up "
@@ -163,7 +186,7 @@ def _score(d: pd.DataFrame) -> np.ndarray:
     """Trader logic, weights fixed a priori: trend, then breakout, then confirmation."""
     r = d[FE].rank(pct=True).fillna(0.5)
     return (2 * (r.r_3m + r.r_6m) + 1.5 * r.dist_hi + r.vol_z
-            + r.adv_growth + (1 - r.max20)).values
+            + r.adv_growth + (1 - r.max20) - EXHAUST_PEN * r.r_1m).values
 
 
 def live(freq: str = "W", K: int = K_DEFAULT, min_adv: float = MIN_ADV) -> dict:
@@ -230,11 +253,34 @@ def live(freq: str = "W", K: int = K_DEFAULT, min_adv: float = MIN_ADV) -> dict:
             "n_universe": int(len(cur))}
 
 
+def regime_exposure() -> dict:
+    """Today's trend exposure from the verified 4-MA ensemble (0..1).
+
+    NOTE ma_signal() compounds internally, so it takes RETURNS. Feeding it an already
+    compounded level double-compounds to numeric overflow and silently returns an
+    all-zero signal -- which is exactly how an earlier run concluded the gate sat in
+    cash through the entire 2023-26 bull market.
+    """
+    from analysis import regime as REG
+    mkt = data.market_index(config.MIN_ADV)
+    sig = REG.ensemble_signal(mkt)
+    e = float(sig.iloc[-1])
+    return {"exposure": round(e, 2),
+            "state": "RISK-ON" if e >= 0.5 else ("PARTIAL" if e > 0 else "RISK-OFF"),
+            "cash_pct": round((1 - e) * 100, 0),
+            "as_of": str(sig.index[-1].date())}
+
+
 def build() -> dict:
     out = {"validation": VALIDATION, "rejected": REJECTED,
            "selection_alpha": SELECTION_ALPHA, "vol_target": VOL_TARGET,
            "buffer_rank": K_DEFAULT * BUFFER_MULT,
+           "exhaust_pen": EXHAUST_PEN, "regime_scale": REGIME_SCALE,
            "cost_rt": COST_RT, "K": K_DEFAULT, "min_adv": MIN_ADV}
+    try:
+        out["regime"] = regime_exposure()
+    except Exception as e:
+        out["regime"] = {"error": type(e).__name__ + ": " + str(e)}
     for f in ("W", "M"):
         try:
             out["live_" + f] = live(f)
